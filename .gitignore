@@ -52,3 +52,6 @@ env.json
 
 # design pictures
 design
+
+# vscode
+.vscode
