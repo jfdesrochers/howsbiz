@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>How's Biz par Jean-François Desrochers</title>
+        <link href="./assets/vendor/css/bootstrap.min.css" rel="stylesheet">
+        <link href="./assets/vendor/css/medium-editor.min.css" rel="stylesheet">
+        <link href="./assets/vendor/css/themes/beagle.min.css" rel="stylesheet">
+        <link href="./assets/css/app.css" rel="stylesheet">
+        <script>require('./assets/vendor/js/titlebar.js')</script>
+    </head>
+    <body>
+        <div id="electron-titlebar" class="drag">
+            <img class="title-logo" src="./assets/img/logojfdtr.png">
+            <div class="title">How's Biz par Jean-François Desrochers</div>
+        </div>
+        <div id="hbcontents"></div>
+
+        <script>window.$ = window.jQuery = require('./assets/vendor/js/jquery-2.2.4.min.js')</script>
+        <script src="./assets/vendor/js/bootstrap.min.js"></script>
+        <script>
+            //Disable Dragging into the Window
+            'use strict';
+            document.addEventListener('dragstart', function (event) {
+                event.preventDefault();
+                return false;
+            }, false);
+            document.addEventListener('dragover', function (event) {
+                event.preventDefault();
+                return false;
+            }, false);
+            document.addEventListener('drop', function (event) {
+                event.preventDefault();
+                return false;
+            }, false);
+        </script>
+        <script>
+            const m = require('mithril')
+            const HowsApp = require('./assets/js/app.js')
+            m.mount(document.getElementById("hbcontents"), HowsApp)
+        </script>
+        <script>
+            const fs = require('fs');
+            fs.watch(__dirname, {recursive: true}, function() {
+                location.reload();
+            })
+        </script>
+    </body>
+</html>

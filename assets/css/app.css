@@ -1,0 +1,290 @@
+body {
+    padding-top: 45px;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: default;
+}
+
+::-webkit-scrollbar {
+    width: 12px;
+}
+ 
+::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+}
+ 
+::-webkit-scrollbar-thumb {
+    background-color: #303030;
+}
+
+::selection {
+    background-color: #4673a3;
+    color: #FFFFFF;
+}
+
+#hbcontents {
+    position: fixed;
+    width: 100%;
+    top: 40px;
+    bottom: 0;
+    overflow: auto;
+}
+
+.uicontainer {
+    display: none;
+}
+
+.apploader {
+    text-align: center;
+}
+
+.apploader .mainlogo {
+    filter: drop-shadow(5px 5px 5px rgba(0, 0, 0, 0.5));
+    margin-top: 100px;
+    margin-bottom: 20px;
+}
+
+#electron-titlebar {
+    background-color: #222222;
+}
+
+#electron-titlebar > .button img {
+    filter: invert(100%) !important;
+}
+
+#electron-titlebar .title {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    line-height: 40px;
+}
+
+#electron-titlebar .title-logo {
+    width: 32px;
+    height: 32px;
+    position: absolute;
+    top: 8px;
+    left: 8px;
+}
+
+html[electron-titlebar-platform="darwin"] #electron-titlebar .title-logo {
+    top: 4px;
+    right: 8px;
+    left: initial;
+}
+
+.acctframe {
+    width: 400px;
+    margin: 0 auto;
+    margin-top: 25px;
+    padding: 20px 60px;
+}
+
+.accounts .mainlogo {
+    filter: drop-shadow(2px 2px 2px rgba(0, 0, 0, 0.5));
+    margin-bottom: 10px;
+}
+
+.has-success .form-control, .has-success .form-control:focus {
+    border: solid 2px #00bc8c;
+}
+
+.has-error .form-control, .has-error .form-control:focus {
+    border: solid 2px #e74c3c;
+}
+
+.muted {
+    opacity: 0.75;
+    font-size: 0.75em;
+}
+
+.mainwindow {
+    padding-left: 250px;
+}
+
+.sidebar {
+    z-index: 1000;
+    position: fixed;
+    left: 250px;
+    width: 250px;
+    top: 40px;
+    bottom: 0;
+    margin-left: -250px;
+    display: flex;
+    flex-direction: column;
+    background: #222222;
+}
+
+.contentwindow {
+    position: fixed;
+    padding: 20px;
+    left: 250px;
+    top: 40px;
+    right: 0;
+    bottom: 0;
+    background-color: #DDDDDD;
+    color: #222222;
+    overflow: auto;
+    -webkit-user-select: initial;
+    user-select: initial;
+    cursor: initial;
+}
+
+.contentwindow.editor {
+    -webkit-user-select: none;
+    user-select: initial;
+    cursor: default;
+}
+
+.bubble-item {
+    width: 32px;
+    height: 32px;
+    margin: 0 auto;
+    font-size: 15px;
+    background-color: #4673a3;
+    color: #ffffff;
+    text-align: center;
+    font-weight: normal;
+    border-radius: 50%;
+}
+
+.bubble-inner {
+    width: 32px;
+    height: 32px;
+    vertical-align: middle;
+    display: table-cell;
+}
+
+.sidebar .media-left {
+    vertical-align: middle;
+}
+
+.sidebar .btn {
+    border-radius: 0;
+}
+
+.sidebar .btn:focus {
+    outline: 0;
+    border-color: transparent;
+}
+
+.btn .media {
+    white-space: initial;
+}
+
+.sidebar .list-wrapper {
+    overflow-y: auto;
+}
+
+.sidebar .list-group {
+    flex-grow: 1;
+    margin-bottom: 0;
+}
+
+.sidebar .list-group-item {
+    border-radius: 0;
+    color: #FFFFFF;
+}
+
+.sidebar .list-group-item:focus, .sidebar .list-group-item:hover {
+    color: #FFFFFF;
+}
+
+.media .badge:first-child {
+    margin-right: 5px;
+}
+
+.sidebar .form-group {
+    margin: 0;
+}
+
+.hbeditor h1 {
+    font-size: 4em;
+    font-weight: bold;
+}
+
+.hbeditor .panel {
+    background-color: #DDDDDD;
+    color: #222222;
+}
+
+.panel-body.focused {
+    background-color: #EEEEEE;
+}
+
+.hbeditor .panel-primary .panel-footer {
+    background-color: #D3DBE3;
+    border-color: #9AB9DA;
+    color: #375a7f;
+}
+
+.hbeditor .panel-success .panel-footer {
+    background-color: #d3e3df;
+    border-color: #9adaca;
+    color: #00bc8c;
+}
+
+.hbeditor .panel-danger .panel-footer {
+    background-color: #e3d5d3;
+    border-color: #daa19a;
+    color: #e74c3c;
+}
+
+.editor:focus {
+    outline: 0;
+}
+
+
+/* Styling utilities */
+
+.no-margin {
+    margin: 0;
+}
+
+.mr5 {
+    margin-right: 5px;
+}
+
+.col1 {
+    background-color: #9C2450;
+}
+
+.col2 {
+    background-color: #028948;
+}
+
+.col3 {
+    background-color: #4630C5;
+}
+
+.col4 {
+    background-color: #E80C5D;
+}
+
+.col5 {
+    background-color: #007E9C;
+}
+
+.col6 {
+    background-color: #EB0010;
+}
+
+.col7 {
+    background-color: #7F6CE0;
+}
+
+.col8 {
+    background-color: #FA9B34;
+}
+
+.col9 {
+    background-color: #C9000C;
+}
+
+.col10 {
+    background-color: #EB5E0C;
+}
+
+.col11 {
+    background-color: #60AB25;
+}

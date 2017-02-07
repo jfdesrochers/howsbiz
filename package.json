@@ -1,0 +1,19 @@
+{
+  "name": "howsbiz",
+  "version": "1.0.0",
+  "description": "How's Biz by J-F Desrochers",
+  "main": "main.js",
+  "scripts": {
+    "package-win": "electron-packager . --overwrite --platform=win32 --arch=x64 --icon=icon.ico --prune=true --out=../howsbiz-dist --win32metadata.CompanyName=\"Jean-Francois Desrochers\" --win32metadata.FileDescription=\"How's Biz par Jean-Francois Desrochers\" --win32metadata.ProductName=\"How's Biz par Jean-Francois Desrochers\" --electron-version=1.4.15"
+  },
+  "author": "Jean-Francois Desrochers",
+  "license": "ISC",
+  "dependencies": {
+    "dropbox": "^2.5.1",
+    "electron-titlebar": "0.0.3",
+    "got": "^6.7.1",
+    "mithril": "^1.0.0",
+    "mongodb": "^2.2.22",
+    "nodemailer": "^3.0.0"
+  }
+}
