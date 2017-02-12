@@ -2,13 +2,14 @@ const m = require('mithril')
 const Updater = require('./updater.js')
 
 const AppLoader = require('./ui/loader.js')
-const AccountsUI = require('./ui/accounts.js')
+const {AccountsUI} = require('./ui/accounts.js')
 const MainWindow = require('./ui/mainwindow.js')
 
 const HowsApp = {}
 
+const {ObjectID} = require('mongodb')
 HowsApp.app = {
-    user: {"_id":"589409c7addba91b0490fca9","firstname":"Jean-François","lastname":"Desrochers","username":"1256614","email":"jean-francois.desrochers@staples.ca","district":"19","store":"139","position":"sls"},
+    user: {"_id":ObjectID("589409c7addba91b0490fca9"),"firstname":"Jean-François","lastname":"Desrochers","username":"1256614","email":"jean-francois.desrochers@staples.ca","district":"19","store":"139","position":"sls"},
     ready: true
 }
 

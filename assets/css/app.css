@@ -38,10 +38,22 @@ body {
     text-align: center;
 }
 
-.apploader .mainlogo {
+.apploader .mainlogo, .notready .mainlogo {
     filter: drop-shadow(5px 5px 5px rgba(0, 0, 0, 0.5));
     margin-top: 100px;
     margin-bottom: 20px;
+}
+
+.notready .mainlogo {
+    margin-top: 50px;
+}
+
+.notready .lead {
+    font-size: 2em;
+}
+
+.apploader .row {
+    margin: 0;
 }
 
 #electron-titlebar {
@@ -177,8 +189,11 @@ html[electron-titlebar-platform="darwin"] #electron-titlebar .title-logo {
 }
 
 .sidebar .list-group {
-    flex-grow: 1;
     margin-bottom: 0;
+}
+
+.sidebar .list-wrapper > .list-group {
+    flex-grow: 1;
 }
 
 .sidebar .list-group-item {
@@ -190,6 +205,11 @@ html[electron-titlebar-platform="darwin"] #electron-titlebar .title-logo {
     color: #FFFFFF;
 }
 
+.sidebar .alert {
+    border-radius: 0;
+    margin: 0;
+}
+
 .media .badge:first-child {
     margin-right: 5px;
 }
@@ -198,12 +218,12 @@ html[electron-titlebar-platform="darwin"] #electron-titlebar .title-logo {
     margin: 0;
 }
 
-.hbeditor h1 {
+.hbeditor h1, .hbviewer h1 {
     font-size: 4em;
     font-weight: bold;
 }
 
-.hbeditor .panel {
+.hbeditor .panel, .hbviewer .panel {
     background-color: #DDDDDD;
     color: #222222;
 }
@@ -212,26 +232,94 @@ html[electron-titlebar-platform="darwin"] #electron-titlebar .title-logo {
     background-color: #EEEEEE;
 }
 
-.hbeditor .panel-primary .panel-footer {
+.hbeditor .panel-primary .panel-footer, .hbviewer .panel-primary .panel-footer {
     background-color: #D3DBE3;
     border-color: #9AB9DA;
     color: #375a7f;
 }
 
-.hbeditor .panel-success .panel-footer {
+.hbeditor .panel-success .panel-footer, .hbviewer .panel-success .panel-footer {
     background-color: #d3e3df;
     border-color: #9adaca;
     color: #00bc8c;
 }
 
-.hbeditor .panel-danger .panel-footer {
+.hbeditor .panel-danger .panel-footer, .hbviewer .panel-danger .panel-footer {
     background-color: #e3d5d3;
     border-color: #daa19a;
     color: #e74c3c;
 }
 
+.hbeditor .panel-default .panel-footer, .hbviewer .panel-default .panel-footer {
+    background-color: #cecece;
+    border-color: #989898;
+}
+
 .editor:focus {
     outline: 0;
+}
+
+.btn-file {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 100px;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    outline: none;
+    background: white;
+    cursor: inherit;
+    display: block;
+}
+
+.pulsing {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.fadein {
+    animation: fade-in 1s ease-in;
+}
+
+@keyframes fade-in {
+    from {opacity:0;}
+    to {opacity:1;}
+}
+
+.panel img {
+    max-width: 100%;
+}
+
+.hbviewer .panel a {
+    color: inherit;
+}
+
+.commenteditor {
+    background-color: #EEEEEE;
+    color: #222222;
+    border: solid 2px #777777;
+    border-radius: 5px;
+    padding: 5px;
+    cursor: text;
 }
 
 

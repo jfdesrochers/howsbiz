@@ -55,3 +55,6 @@ design
 
 # vscode
 .vscode
+
+# release script
+make_release.sh

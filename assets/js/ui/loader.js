@@ -4,7 +4,7 @@ const $ = window.$ || require('../../vendor/js/jquery-2.2.4.min.js')
 const AppLoader = {}
 
 AppLoader.status = {
-    message: 'Bienvenue!',
+    message: '',
     isError: false,
     msg: function (msg) {
         this.message = msg
@@ -16,6 +16,11 @@ AppLoader.status = {
         this.isError = true
         m.redraw()
     }
+}
+
+AppLoader.oninit = function (vnode) {
+    AppLoader.status.message = vnode.attrs.message || 'Bienvenue!'
+    AppLoader.status.isError = false
 }
 
 AppLoader.oncreate = function (vnode) {
@@ -31,7 +36,7 @@ AppLoader.view = function () {
         m('div.row', 
             m('div.col-xs-6.col-xs-offset-3', [
                 m('img.mainlogo', {src: './assets/img/logo.svg'}),
-                m('p.lead' + (AppLoader.status.isError ? '.text-danger' : ''), AppLoader.status.message)
+                m('p.lead' + (AppLoader.status.isError ? '.text-danger' : '.pulsing'), AppLoader.status.message)
             ])
         )
     )

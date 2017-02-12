@@ -70,6 +70,7 @@ const Database = {
                 users.findOne({'username': username})
                 .then(function (user) {
                     if ((user) && (user.password === password)) {
+                        db.close()
                         resolve(user)
                     } else {
                         db.close()
@@ -87,14 +88,116 @@ const Database = {
             })
         }) 
     },
+    getUsers: function(lastupdate) {
+        return new Promise(function (resolve, reject) {
+            MongoClient.connect(env.DBURL)
+            .then(function(db) {
+                let users = db.collection('users')
+                let query = {}
+                if (lastupdate) query['lastModified'] = {$gte: lastupdate}
+                users.find(query).project({'firstname': 1, 'lastname': 1, 'store': 1, 'position': 1}).toArray()
+                .then(function (userlist) {
+                    db.close()
+                    resolve(userlist)
+                })
+                .catch(function (err) {
+                    db.close()
+                    reject({errcode: 'e_mongoerr', errmsg: err})
+                })
+
+            })
+            .catch(function (err) {
+                reject({errcode: 'e_mongoerr', errmsg: err})
+            })
+        }) 
+    },
+    getHBs: function (district, week, lastupdate) {
+        return new Promise(function (resolve, reject) {
+            MongoClient.connect(env.DBURL)
+            .then(function(db) {
+                let hbs = db.collection('howsbiz')
+                let query = {'district': district, 'week': week}
+                if (lastupdate) query['lastModified'] = {$gte: lastupdate}
+                hbs.find(query).toArray()
+                .then(function (hblist) {
+                    db.close()
+                    resolve(hblist)
+                })
+                .catch(function (err) {
+                    db.close()
+                    reject({errcode: 'e_mongoerr', errmsg: err})
+                })
+
+            })
+            .catch(function (err) {
+                reject({errcode: 'e_mongoerr', errmsg: err})
+            })
+        })
+    },
+    saveLikeViewComment: function (hbid, saveType, contents) {
+        return new Promise(function (resolve, reject) {
+            MongoClient.connect(env.DBURL)
+            .then(function(db) {
+                let hbs = db.collection('howsbiz')
+                let changes = {lastModified: new Date()}
+                changes[saveType] = contents
+                hbs.update({_id: hbid}, {$set: changes})
+                .then(function () {
+                    db.close()
+                    resolve()
+                })
+                .catch(function (err) {
+                    db.close()
+                    reject({errcode: 'e_mongoerr', errmsg: err})
+                })
+
+            })
+            .catch(function (err) {
+                reject({errcode: 'e_mongoerr', errmsg: err})
+            })
+        })
+    },
+    saveHB: function (hb) {
+        return new Promise(function (resolve, reject) {
+            MongoClient.connect(env.DBURL)
+            .then(function(db) {
+                let hbs = db.collection('howsbiz')
+                hb.lastModified = new Date()
+                if (hb._id) {
+                    hbs.update({'_id': hb._id}, hb)
+                    .then(function (res) {
+                        db.close()
+                        resolve(res)
+                    })
+                    .catch(function (err) {
+                        db.close()
+                        reject({errcode: 'e_mongoerr', errmsg: err})
+                    })
+                } else {
+                    hbs.insert(hb)
+                    .then(function (res) {
+                        db.close()
+                        resolve(res)
+                    })
+                    .catch(function (err) {
+                        db.close()
+                        reject({errcode: 'e_mongoerr', errmsg: err})
+                    })
+                }
+            })
+            .catch(function (err) {
+                reject({errcode: 'e_mongoerr', errmsg: err})
+            })
+        })
+    },
     uploadFile: function(store, week, file) {
         const dbx = new Dropbox({accessToken: env.DROPBOXTOKEN})
         return new Promise(function (resolve, reject) {
-            dbx.fileUpload({path: store + '/' + week + '.jpg', mode: 'overwrite', contents: file})
+            dbx.filesUpload({path: '/' + store + '/' + week + '.jpg', mode: 'overwrite', contents: file})
             .then(function () {
-                dbx.sharingCreateSharedLink({path: store + '/' + week + '.jpg', short_url: false})
+                dbx.sharingCreateSharedLink({path: '/' + store + '/' + week + '.jpg', short_url: false})
                 .then(function (link) {
-                    resolve(link.url)
+                    resolve(link.url.replace('dl=0', 'raw=1'))
                 })
                 .catch(function (err) {
                     reject({errcode: 'e_dropboxerr', errmsg: err})
@@ -102,6 +205,45 @@ const Database = {
             })
             .catch(function (err) {
                 reject({errcode: 'e_dropboxerr', errmsg: err})
+            })
+        })
+    },
+    changePassword: function(user, oldpass, newpass) {
+        return new Promise(function (resolve, reject) {
+            MongoClient.connect(env.DBURL)
+            .then(function(db) {
+                let users = db.collection('users')
+                users.findOne({'_id': user._id})
+                .then(function (user) {
+                    let hash = crypto.createHash('sha256');
+                    hash.update(oldpass)
+                    let oldpassword = hash.digest('hex')
+                    if ((user) && (user.password === oldpassword)) {
+                        hash = crypto.createHash('sha256');
+                        hash.update(newpass)
+                        let newpassword = hash.digest('hex')
+                        users.update({'_id': user._id}, {'$set': {'password': newpassword, lastModified: new Date()}})
+                        .then(function () {
+                            db.close()
+                            resolve()
+                        })
+                        .catch(function (err) {
+                            db.close()
+                            reject({errcode: 'e_mongoerr', errmsg: err})
+                        })
+                    } else {
+                        db.close()
+                        reject({errcode: 'e_badpassword', errmsg: ''})
+                    }
+                })
+                .catch(function (err) {
+                    db.close()
+                    reject({errcode: 'e_mongoerr', errmsg: err})
+                })
+
+            })
+            .catch(function (err) {
+                reject({errcode: 'e_mongoerr', errmsg: err})
             })
         })
     }

@@ -13,9 +13,10 @@ const Property = function (defaultProp, callback) {
     let curValue = defaultProp
     return function (propValue) {
         if (propValue !== undefined) {
+            let oldValue = curValue
             curValue = propValue
             if (typeof callback === 'function') {
-                callback(propValue)
+                callback(propValue, oldValue)
             }
         }
         return curValue

@@ -15,6 +15,7 @@
             <img class="title-logo" src="./assets/img/logojfdtr.png">
             <div class="title">How's Biz par Jean-François Desrochers</div>
         </div>
+        <div id="modalcontainer"></div>
         <div id="hbcontents"></div>
 
         <script>window.$ = window.jQuery = require('./assets/vendor/js/jquery-2.2.4.min.js')</script>
@@ -40,11 +41,21 @@
             const HowsApp = require('./assets/js/app.js')
             m.mount(document.getElementById("hbcontents"), HowsApp)
         </script>
+        <!--For Debug
         <script>
             const fs = require('fs');
             fs.watch(__dirname, {recursive: true}, function() {
                 location.reload();
             })
+        </script> !-->
+        <!--For Debug !-->
+        <script>
+            $(document).bind("keydown", (e) => {
+                if ((e.which || e.keyCode) == 116) {
+                    e.preventDefault()
+                    location.reload()
+                }
+            });
         </script>
     </body>
 </html>

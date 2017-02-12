@@ -1,117 +1,113 @@
 const m = require('mithril')
-const {MediumEditor} = require('../../vendor/js/medium-editor.min.js')
 const Property = require('../utils/Property.js')
-const UniqueRandom = require('../utils/random.js')
+const {UniqueRandom, ModalWindow} = require('../utils/misc.js')
 const {getWeekNo, getAllWeeks} = require('../utils/dateutils.js')
+const EventEmitter = require('events')
 const $ = window.$ || require('../../vendor/js/jquery-2.2.4.min.js')
+const _ = require('lodash')
 
 const AppLoader = require('./loader.js')
+const HBEditor = require('./editor.js')
+const HBViewer = require('./viewer.js')
+const {PasswordChange} = require('./accounts.js')
+
+const {Database, storeList} = require('../data.js')
 
 const HBData = {
-    users: [],
+    users: {},
     hbs: [],
     lastUpdate: null
 }
 
-const HBEditor = {}
-
-HBEditor.oninit = function (vnode) {
-    this.parent = vnode.attrs.parent
-}
-
-HBEditor.oncreate = function () {
-    this.editor = new MediumEditor('.editor', {
-        toolbar: {
-            buttons: ['bold', 'italic', 'underline', 'anchor', 'h2', 'h3', 'quote', 'unorderedlist', 'orderedlist'],
-        },
-        placeholder: {
-            text: 'Écrivez votre commentaire ici',
-            hideOnClick: true
-        },
-        anchor: {
-            customClassOption: null,
-            customClassOptionText: 'Button',
-            linkValidation: false,
-            placeholderText: 'Entrez une adresse web',
-            targetCheckbox: false,
-            targetCheckboxText: 'Open in new window'
-        },
-        autoLink: true
-    })
-    this.editor.subscribe('editableInput', (event, editable) => {
-        this.parent.editorDirty(true)
-    });
-}
-
-HBEditor.view = function () {
-    return m('div.hbeditor', [
-        m('h1', 'Mon How\'s Biz'),
-        m('div.lead', this.parent.weeks[this.parent.curWeek() - 1][1]),
-        m('div.panel.panel-primary', [
-            m('div.panel-heading', m('h3.panel-title', 'Ventes')),
-            m('div.panel-body', m('div#salesEdit.editor', { 
-                onfocus: (e) => {
-                    e.target.parentElement.classList.add('focused')
-                    e.redraw = false
-                },
-                onblur: (e) => {
-                    e.target.parentElement.classList.remove('focused')
-                    e.redraw = false
-                },
-            })),
-            m('div.panel-footer', 'Conversion et DPO, coaching et Vente Inspirée, marchandisage et opérations, formation et reconnaissance (Apple, concours, etc.)')
-        ]),
-        m('div.panel.panel-success', [
-            m('div.panel-heading', m('h3.panel-title', 'Services')),
-            m('div.panel-body', m('div#servEdit.editor', { 
-                onfocus: (e) => {
-                    e.target.parentElement.classList.add('focused')
-                    e.redraw = false
-                },
-                onblur: (e) => {
-                    e.target.parentElement.classList.remove('focused')
-                    e.redraw = false
-                },
-            })),
-            m('div.panel-footer', 'Initiatives au Techno-Centre et aux Copies (services à domicile, liquid armor, formation et coaching, marchandisage, appels clients)')
-        ]),
-        m('div.panel.panel-danger', [
-            m('div.panel-heading', m('h3.panel-title', 'Développement des affaires')),
-            m('div.panel-body', m('div#devlEdit.editor', { 
-                onfocus: (e) => {
-                    e.target.parentElement.classList.add('focused')
-                    e.redraw = false
-                },
-                onblur: (e) => {
-                    e.target.parentElement.classList.remove('focused')
-                    e.redraw = false
-                },
-            })),
-            m('div.panel-footer', 'Réseautage (BDM, PRE, etc.), vos grosses ventes et vos bons coups. Si vous avez créé un lien avec un client d\'affaires, mentionnez-le ici!')
-        ])
-    ])
-}
-
+class MainEvents extends EventEmitter {}
 const MainWindow = {}
 
 MainWindow.oninit = function (vnode) {
     this.user = vnode.attrs.app.user
     this.weeks = getAllWeeks()
-    this.curWeek = Property(getWeekNo(true))
+    this.curWeek = Property(String(getWeekNo(true)))
     this.randomColor = UniqueRandom(1, 11, true)
-    this.editorDirty = Property(false)
-}
-
-MainWindow.oncreate = function (vnode) {
-    $(vnode.dom).fadeIn(() => {
-        if (typeof vnode.attrs.onready === 'function') {
-            vnode.attrs.onready()
-        }
+    this.editorDirty = Property(false, (cur, old) => {
+        if (cur !== old) m.redraw()
     })
+
+    this.mainEvents = new MainEvents()
+    
+    this.dbError = Property('')
+    this.dbinterval = null
+    this.dbintervalLoad = () => {
+        Database.getUsers(HBData.lastUpdate)
+        .then((userlist) => {
+            _.assign(HBData.users, _.keyBy(userlist, (val) => val._id.toHexString()))
+            Database.getHBs(this.user.district, this.curWeek(), HBData.lastUpdate)
+            .then((hblist) => {
+                _.assign(HBData.hbs, _.keyBy(hblist, (val) => val._id.toHexString()))
+                HBData.lastUpdate = new Date()
+                this.mainEvents.emit('rebinddata')
+                m.redraw()
+            })
+        })
+        .catch((err) => {
+            console.log('Error [MongoDB] ' + err.errmsg)
+            this.dbError('Une erreur est survenue lors de l\'accès aux données. Merci de réessayer.')
+        })
+    }
+
+    this.curView = Property('emptyview')
+    this.myHB = Property('')
+    this.hasEditor = Property(false)
+
+    this.loaderReady = () => {
+        Database.getUsers()
+        .then((userlist) => {
+            HBData.users = _.keyBy(userlist, (val) => val._id.toHexString())
+            Database.getHBs(this.user.district, this.curWeek())
+            .then((hblist) => {
+                HBData.hbs = _.keyBy(hblist, (val) => val._id.toHexString())
+                HBData.lastUpdate = new Date()
+                let hbid = _.find(HBData.hbs, (o) => {return (o.store === this.user.store && o.week === this.curWeek())})
+                if (hbid) {
+                    this.myHB(hbid._id.toHexString())
+                } else {
+                    this.myHB('')
+                }
+                if ((this.user.store !== '0') && ((this.myHB() && HBData.hbs[this.myHB()].status !== 'published') || (this.myHB() === ''))) {
+                    this.curView('editor')
+                    this.hasEditor(true)
+                } else {
+                    this.hasEditor(false)
+                    let keys = Object.keys(HBData.hbs)
+                    if (keys.length > 0) {
+                        this.curView(keys[0])
+                    } else {
+                        this.curView('emptyview')
+                    }
+                }
+                m.redraw()
+            })
+        })
+        .catch((err) => {
+            console.log('Error [MongoDB] ' + err.errmsg)
+            AppLoader.status.err('Une erreur est survenue lors de l\'accès aux données. Merci de réessayer.')
+        })
+    }
 }
 
 MainWindow.view = function (vnode) {
-    return m('div.mainwindow.uicontainer', [
+    return HBData.lastUpdate === null ? m(AppLoader, {onready: this.loaderReady, message: 'Chargement des données en cours...'}) :
+    m('div.mainwindow.uicontainer', {
+        oncreate: (vdom) => {
+            $(vdom.dom).fadeIn('slow', () => {
+                if (typeof vnode.attrs.onready === 'function') {
+                    vnode.attrs.onready()
+                }
+                this.dbinterval = setInterval(this.dbintervalLoad, 60000)
+            })
+        },
+        onremove: () => {
+            clearInterval(this.dbinterval)
+        }
+    }, [
         m('div.sidebar', [
             m('div.btn-group', [
                 m('button.btn.btn-default.btn-block.dropdown-toggle', {'data-toggle': 'dropdown'}, m('div.media', [
@@ -122,125 +118,74 @@ MainWindow.view = function (vnode) {
                     ])
                 ])),
                 m('ul.btn-block.dropdown-menu.dropdown-menu-right', [
-                    m('li', m('a[href=""]', 'Changer de mot de passe...')),
+                    m('li', m('a[href=""]', {onclick: (e) => {
+                        e.preventDefault()
+                        m.mount(document.getElementById('modalcontainer'), ModalWindow(PasswordChange, {user: vnode.state.user, done: () => m.mount(document.getElementById('modalcontainer'), null)}))
+                        return false
+                    }}, 'Changer de mot de passe...')),
                     m('li.divider'),
-                    m('li', m('a[href="#"]', {onclick: () => vnode.attrs.app.user = null},'Se Déconnecter'))
+                    m('li', m('a[href="#"]', {onclick: () => {
+                        vnode.attrs.app.user = null
+                        HBData.hbs = []
+                        HBData.users = {}
+                        HBData.lastUpdate = null
+                    }}, 'Se Déconnecter'))
                 ])
             ]),
+            this.dbError().length > 0 ? m('div.alert.alert-danger.alert-dismissible.fade.in', {oncreate: (vdom) => {
+                $(vdom.dom).on('closed.bs.alert', () => {
+                    this.dbError('')
+                })
+            }}, [
+                m('button.close', {'data-dismiss': 'alert'}, m.trust('&times;')),
+                this.dbError()
+            ]) : '',
             m('ul.list-group', [
                 m('li.list-group-item', m('div.form-group', [
                     m('label.control-label', {for: 'curWeek'}, 'Semaine fiscale'),
-                    m('select.form-control#curWeek', {onchange: m.withAttr('value', this.curWeek)}, 
+                    m('select.form-control#curWeek', {onchange: (e) => {
+                        this.curWeek(e.target.value)
+                        HBData.hbs = []
+                        HBData.users = {}
+                        HBData.lastUpdate = null
+                    }}, 
                         this.weeks.map((item) => {
-                            return m('option', {value: item[0], selected: (item[0] === this.curWeek())}, item[1])
+                            return m('option', {value: item[0], selected: (item[0] == this.curWeek())}, item[1])
                         })
                     )
                 ])),
-                this.user.store !== '0' ? m('a[href="#"].list-group-item.active', [
+                this.hasEditor() ? m('a[href="#"].list-group-item' + (this.curView() === 'editor' ? '.active' : ''), {onclick: () => {
+                    if (this.curView() !== 'editor') {
+                        this.curView('editor')
+                        m.redraw()
+                    }
+                }}, [
                     m('h4.list-group-item-heading', 'Rédiger mon How\'s biz'),
-                    m('p.list-group-item-text', 'Non commencé.')
+                    m('p.list-group-item-text', this.editorDirty() ? 'Non sauvegardé...' : 'Sauvegardé.')
                 ]) : ''
             ]),
-            m('div.list-wrapper', m('ul.list-group', [
-                m('a[href="#"].list-group-item', m('div.media', [
-                    m('div.media-left', m('div.bubble-item.col' + this.randomColor(), m('div.bubble-inner', '139'))),
+            m('div.list-wrapper', m('ul.list-group', _.map(_.sortBy(HBData.hbs, (o) => parseInt(o.store)), (o) => {
+                let oid = o._id.toHexString()
+                return m('a[href="#"].list-group-item.fadein' + (this.curView() == oid ? '.active' : ''), {key: oid, onclick: () => {
+                    this.curView(oid)
+                    m.redraw()
+                }}, m('div.media', [
+                    m('div.media-left', m('div.bubble-item', {oncreate: (vdom) => vdom.dom.classList.add('col'+ this.randomColor())}, m('div.bubble-inner', o.store))),
                     m('div.media-body', [
-                        m('div.media-heading.no-margin', 'Drummondville'),
-                        m('span.badge.mr5', [m('span.mr5', '3'), m('span.glyphicon.glyphicon-heart')]),
-                        m('span.badge', [m('span.mr5', '3'), m('span.glyphicon.glyphicon-eye-open')])
-                    ])
-                ])),
-                m('a[href="#"].list-group-item', m('div.media', [
-                    m('div.media-left', m('div.bubble-item.col' + this.randomColor(), m('div.bubble-inner', '333'))),
-                    m('div.media-body', [
-                        m('div.media-heading.no-margin', 'Rouyn-Noranda'),
-                        m('span.badge.mr5', [m('span.mr5', '2'), m('span.glyphicon.glyphicon-heart')]),
-                        m('span.badge', [m('span.mr5', '7'), m('span.glyphicon.glyphicon-eye-open')])
-                    ])
-                ])),
-                m('a[href="#"].list-group-item', m('div.media', [
-                    m('div.media-left', m('div.bubble-item.col' + this.randomColor(), m('div.bubble-inner', '427'))),
-                    m('div.media-body', [
-                        m('div.media-heading.no-margin', 'Beloeil'),
-                        m('span.badge.mr5', [m('span.mr5', '9'), m('span.glyphicon.glyphicon-heart')]),
-                        m('span.badge', [m('span.mr5', '17'), m('span.glyphicon.glyphicon-eye-open')])
-                    ])
-                ])),
-                m('a[href="#"].list-group-item', m('div.media', [
-                    m('div.media-left', m('div.bubble-item.col' + this.randomColor(), m('div.bubble-inner', '139'))),
-                    m('div.media-body', [
-                        m('div.media-heading.no-margin', 'Drummondville'),
-                        m('span.badge.mr5', [m('span.mr5', '3'), m('span.glyphicon.glyphicon-heart')]),
-                        m('span.badge', [m('span.mr5', '3'), m('span.glyphicon.glyphicon-eye-open')])
-                    ])
-                ])),
-                m('a[href="#"].list-group-item', m('div.media', [
-                    m('div.media-left', m('div.bubble-item.col' + this.randomColor(), m('div.bubble-inner', '333'))),
-                    m('div.media-body', [
-                        m('div.media-heading.no-margin', 'Rouyn-Noranda'),
-                        m('span.badge.mr5', [m('span.mr5', '2'), m('span.glyphicon.glyphicon-heart')]),
-                        m('span.badge', [m('span.mr5', '7'), m('span.glyphicon.glyphicon-eye-open')])
-                    ])
-                ])),
-                m('a[href="#"].list-group-item', m('div.media', [
-                    m('div.media-left', m('div.bubble-item.col' + this.randomColor(), m('div.bubble-inner', '427'))),
-                    m('div.media-body', [
-                        m('div.media-heading.no-margin', 'Beloeil'),
-                        m('span.badge.mr5', [m('span.mr5', '9'), m('span.glyphicon.glyphicon-heart')]),
-                        m('span.badge', [m('span.mr5', '17'), m('span.glyphicon.glyphicon-eye-open')])
-                    ])
-                ])),
-                m('a[href="#"].list-group-item', m('div.media', [
-                    m('div.media-left', m('div.bubble-item.col' + this.randomColor(), m('div.bubble-inner', '139'))),
-                    m('div.media-body', [
-                        m('div.media-heading.no-margin', 'Drummondville'),
-                        m('span.badge.mr5', [m('span.mr5', '3'), m('span.glyphicon.glyphicon-heart')]),
-                        m('span.badge', [m('span.mr5', '3'), m('span.glyphicon.glyphicon-eye-open')])
-                    ])
-                ])),
-                m('a[href="#"].list-group-item', m('div.media', [
-                    m('div.media-left', m('div.bubble-item.col' + this.randomColor(), m('div.bubble-inner', '333'))),
-                    m('div.media-body', [
-                        m('div.media-heading.no-margin', 'Rouyn-Noranda'),
-                        m('span.badge.mr5', [m('span.mr5', '2'), m('span.glyphicon.glyphicon-heart')]),
-                        m('span.badge', [m('span.mr5', '7'), m('span.glyphicon.glyphicon-eye-open')])
-                    ])
-                ])),
-                m('a[href="#"].list-group-item', m('div.media', [
-                    m('div.media-left', m('div.bubble-item.col' + this.randomColor(), m('div.bubble-inner', '427'))),
-                    m('div.media-body', [
-                        m('div.media-heading.no-margin', 'Beloeil'),
-                        m('span.badge.mr5', [m('span.mr5', '9'), m('span.glyphicon.glyphicon-heart')]),
-                        m('span.badge', [m('span.mr5', '17'), m('span.glyphicon.glyphicon-eye-open')])
-                    ])
-                ])),
-                m('a[href="#"].list-group-item', m('div.media', [
-                    m('div.media-left', m('div.bubble-item.col' + this.randomColor(), m('div.bubble-inner', '139'))),
-                    m('div.media-body', [
-                        m('div.media-heading.no-margin', 'Drummondville'),
-                        m('span.badge.mr5', [m('span.mr5', '3'), m('span.glyphicon.glyphicon-heart')]),
-                        m('span.badge', [m('span.mr5', '3'), m('span.glyphicon.glyphicon-eye-open')])
-                    ])
-                ])),
-                m('a[href="#"].list-group-item', m('div.media', [
-                    m('div.media-left', m('div.bubble-item.col' + this.randomColor(), m('div.bubble-inner', '333'))),
-                    m('div.media-body', [
-                        m('div.media-heading.no-margin', 'Rouyn-Noranda'),
-                        m('span.badge.mr5', [m('span.mr5', '2'), m('span.glyphicon.glyphicon-heart')]),
-                        m('span.badge', [m('span.mr5', '7'), m('span.glyphicon.glyphicon-eye-open')])
-                    ])
-                ])),
-                m('a[href="#"].list-group-item', m('div.media', [
-                    m('div.media-left', m('div.bubble-item.col' + this.randomColor(), m('div.bubble-inner', '427'))),
-                    m('div.media-body', [
-                        m('div.media-heading.no-margin', 'Beloeil'),
-                        m('span.badge.mr5', [m('span.mr5', '9'), m('span.glyphicon.glyphicon-heart')]),
-                        m('span.badge', [m('span.mr5', '17'), m('span.glyphicon.glyphicon-eye-open')])
+                        m('div.media-heading.no-margin', storeList[o.district][o.store]),
+                        o.status === 'published' ? [
+                            m('span.badge.mr5', [m('span.mr5', Object.keys(o.comments).length), m('span.glyphicon.glyphicon-comment')]),
+                            m('span.badge.mr5', [m('span.mr5', Object.keys(o.likes).length), m('span.glyphicon.glyphicon-heart')]),
+                            m('span.badge', [m('span.mr5', Object.keys(o.views).length), m('span.glyphicon.glyphicon-eye-open')])
+                        ] : m('span.muted', 'Pas encore publié')
                     ])
                 ]))
-            ]))
+            })))
         ]),
-        m('div.contentwindow', m(HBEditor, {parent: this}))
+        m('div.contentwindow', this.curView() === 'editor' ? m(HBEditor, {parent: this, HBData: HBData, HB: (this.myHB() ? HBData.hbs[this.myHB()] : undefined)}) : 
+            this.curView() === 'emptyview' ? '' :
+            m(HBViewer, {key: this.curView(), parent: this, HBData: HBData, HBIndex: this.curView()})
+        )
     ])
 }
 

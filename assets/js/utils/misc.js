@@ -1,3 +1,5 @@
+const m = require('mithril')
+
 const UniqueRandom = function (min, max, shouldReset) {
     shouldReset = shouldReset || false
     const numbers = [] 
@@ -18,4 +20,14 @@ const UniqueRandom = function (min, max, shouldReset) {
     }
 }
 
-module.exports = UniqueRandom
+module.exports.UniqueRandom = UniqueRandom
+
+const ModalWindow = function(component, attrs) {
+    return {
+        view: function () {
+            return m(component, attrs)
+        }
+    }
+}
+
+module.exports.ModalWindow = ModalWindow

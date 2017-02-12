@@ -37,15 +37,18 @@ PasswordChange.oninit = function (vnode) {
     this.newpassword = Property('')
     this.passconf = Property('')
     this.validations = {}
-    this.goLogin = (e) => {
+    this.isLoading = Property(false, () => {m.redraw()})
+    this.passchanged = Property(false)
+    this.goChange = (e) => {
         e.preventDefault()
         let valid = Object.keys(this.validations).filter((val) => !this.validations[val].validate()).length === 0
         if (valid) {
             this.isLoading(true)
-            Database.changePassword(this.oldpassword(), this.newpassword())
+            Database.changePassword(this.user, this.oldpassword(), this.newpassword())
             .then(() => {
                 if (typeof vnode.attrs.done === 'function') {
-                    vnode.attrs.done(true)
+                    this.passchanged(true)
+                    $('#passchange').modal('hide')
                 }
             })
             .catch((rsn) => {
@@ -61,19 +64,31 @@ PasswordChange.oninit = function (vnode) {
         }
         return false
     }
+    this.doCancel = (e) => {
+        e.preventDefault()
+        if (typeof vnode.attrs.done === 'function') {
+            vnode.attrs.done(this.passchanged())
+        }
+    }
 }
 
 PasswordChange.view = function () {
-    m(".modal.fade.in#passchange[tabindex='-1']", [
+    return m(".modal.fade#passchange[tabindex='-1']", {
+            oncreate: (vdom) => {
+                $(vdom.dom).modal('show')
+                $(vdom.dom).on('hidden.bs.modal', this.doCancel)
+                $(vdom.dom).on('shown.bs.modal', () => $('#oldpassword').focus())
+            },
+        }, [
 		m(".modal-dialog", [
 			m(".modal-content", [
 				m(".modal-header", [
-					m("button.close[type='button']", [m("span", "×")]),
-					m("h4.modal-title[id='myModalLabel']", "Changer votre mot de passe")
+					m("button.close", {'data-dismiss': 'modal'}, m("span", "×")),
+					m("h4.modal-title", "Changer votre mot de passe")
 				]),
 				m(".modal-body", [
                     'Pour changer votre mot de passe, veuillez entrer les informations ci-dessous.',
-                    m('form', {action: '', onsubmit: this.goChange, oncreate: () => $('#oldpassword').focus()}, [
+                    m('form', {action: '', onsubmit: this.goChange}, [
                         m(ValidatingInput, {options:{
                             name: 'oldpassword',
                             type: 'password',
@@ -107,8 +122,8 @@ PasswordChange.view = function () {
                     ])
                 ]),
 				m(".modal-footer", [
-					m("button.btn.btn-default[type='button']", "Fermer"),
-					m("button.btn.btn-primary[type='button']", "Sauvegarder")
+					m("button.btn.btn-default" + (this.isLoading() ? '.disabled' : ''), {'data-dismiss': 'modal'}, "Fermer"),
+					m("button.btn.btn-primary" + (this.isLoading() ? '.disabled' : ''), {onclick: this.goChange}, this.isLoading() ? 'Chargement...' : "Sauvegarder")
 				])
 			])
 		])
@@ -362,4 +377,5 @@ AccountsUI.view = function (vnode) {
     )
 }
 
-module.exports = AccountsUI
+module.exports.AccountsUI = AccountsUI
+module.exports.PasswordChange = PasswordChange
