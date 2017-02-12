@@ -167,7 +167,7 @@ html[electron-titlebar-platform="darwin"] #electron-titlebar .title-logo {
     display: table-cell;
 }
 
-.sidebar .media-left {
+.sidebar .media-left, .commentsection .media-left {
     vertical-align: middle;
 }
 
@@ -320,6 +320,14 @@ html[electron-titlebar-platform="darwin"] #electron-titlebar .title-logo {
     border-radius: 5px;
     padding: 5px;
     cursor: text;
+}
+
+.commentsection .list-group-item {
+    background-color: #DDDDDD;
+}
+
+.contentwindow a {
+    color: #4673a3;
 }
 
 

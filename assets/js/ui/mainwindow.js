@@ -19,6 +19,20 @@ const HBData = {
     lastUpdate: null
 }
 
+const EmptyView = {
+    view: function () {
+        return m('div.notready', 
+        m('div.row', 
+            m('div.col-xs-8.col-xs-offset-2', [
+                m('img.mainlogo', {src: './assets/img/logo.svg'}),
+                m('p.lead', 'Bienvenue !'),
+                m('p', 'Bienvenue dans How\'s biz par Jean-François Desrochers! Lorsque des magasins auront publié leurs commentaires How\'s biz, vous les trouverez dans la barre à gauche. Bonne consultation!')
+            ])
+        )
+    )
+    }
+}
+
 class MainEvents extends EventEmitter {}
 const MainWindow = {}
 
@@ -183,7 +197,7 @@ MainWindow.view = function (vnode) {
             })))
         ]),
         m('div.contentwindow', this.curView() === 'editor' ? m(HBEditor, {parent: this, HBData: HBData, HB: (this.myHB() ? HBData.hbs[this.myHB()] : undefined)}) : 
-            this.curView() === 'emptyview' ? '' :
+            this.curView() === 'emptyview' ? m(EmptyView) :
             m(HBViewer, {key: this.curView(), parent: this, HBData: HBData, HBIndex: this.curView()})
         )
     ])

@@ -95,7 +95,7 @@ const Database = {
                 let users = db.collection('users')
                 let query = {}
                 if (lastupdate) query['lastModified'] = {$gte: lastupdate}
-                users.find(query).project({'firstname': 1, 'lastname': 1, 'store': 1, 'position': 1}).toArray()
+                users.find(query).project({'firstname': 1, 'lastname': 1, 'store': 1, 'position': 1, 'district': 1}).toArray()
                 .then(function (userlist) {
                     db.close()
                     resolve(userlist)
@@ -134,6 +134,29 @@ const Database = {
             })
         })
     },
+    getComments: function (hbid, lastupdate) {
+        return new Promise(function (resolve, reject) {
+            MongoClient.connect(env.DBURL)
+            .then(function(db) {
+                let hbs = db.collection('comments')
+                let query = {hbid: hbid}
+                if (lastupdate) query['postDate'] = {$gte: lastupdate}
+                hbs.find(query).sort({'postDate': -1}).toArray()
+                .then(function (commentlist) {
+                    db.close()
+                    resolve(commentlist)
+                })
+                .catch(function (err) {
+                    db.close()
+                    reject({errcode: 'e_mongoerr', errmsg: err})
+                })
+
+            })
+            .catch(function (err) {
+                reject({errcode: 'e_mongoerr', errmsg: err})
+            })
+        })
+    },
     saveLikeViewComment: function (hbid, saveType, contents) {
         return new Promise(function (resolve, reject) {
             MongoClient.connect(env.DBURL)
@@ -145,6 +168,33 @@ const Database = {
                 .then(function () {
                     db.close()
                     resolve()
+                })
+                .catch(function (err) {
+                    db.close()
+                    reject({errcode: 'e_mongoerr', errmsg: err})
+                })
+
+            })
+            .catch(function (err) {
+                reject({errcode: 'e_mongoerr', errmsg: err})
+            })
+        })
+    },
+    saveComment: function (comment, hbid, userid) {
+        return new Promise(function (resolve, reject) {
+            MongoClient.connect(env.DBURL)
+            .then(function(db) {
+                let cmts = db.collection('comments')
+                let doc = {
+                    hbid: hbid,
+                    userid: userid,
+                    comment: comment,
+                    postDate: new Date()
+                }
+                cmts.insert(doc)
+                .then(function () {
+                    db.close()
+                    resolve(doc)
                 })
                 .catch(function (err) {
                     db.close()
