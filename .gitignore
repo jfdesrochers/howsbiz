@@ -58,3 +58,7 @@ design
 
 # release script
 make_release.sh
+
+# icons
+Icon.ico
+Icon.icns

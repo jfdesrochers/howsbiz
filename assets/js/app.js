@@ -16,14 +16,14 @@ HowsApp.app = {
 HowsApp.oninit = function () {
     this.loaderReady = () => {
         console.log('Welcome to How\'s Biz by Jean-Francois Desrochers')
-        AppLoader.status.msg('Vérifications des mises à jour...')
+        AppLoader.status.msg('Vérification des mises à jour...')
         Updater.checkUpdates()
         .then((newVersion) => {
             if (newVersion) {
+                AppLoader.status.msg('Mise à jour en cours...')
                 Updater.doUpdate(newVersion)
                 .then(() => {
-                    //location.reload()
-                    console.log('done')
+                    location.reload()
                 })
                 .catch((err) => {
                     AppLoader.status.err(err)

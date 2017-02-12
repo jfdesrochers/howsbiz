@@ -36,7 +36,7 @@
                 return false;
             }, false);
             //Open links in Browsers
-            var shell = require('electron').shell;
+            let {shell} = require('electron');
             $(document).on('click', 'a[href^="http"]', function(event) {
                 event.preventDefault();
                 shell.openExternal(this.href);
@@ -60,6 +60,9 @@
                 if ((e.which || e.keyCode) == 116) {
                     e.preventDefault()
                     location.reload()
+                } else if ((e.which || e.keyCode) == 119) {
+                    let {remote} = require('electron');
+                    remote.getCurrentWindow().toggleDevTools()
                 }
             });
         </script>

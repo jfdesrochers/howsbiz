@@ -1,5 +1,6 @@
 const got = require('got')
-const gotZip = require('got-zip')
+const zlib = require('zlib')
+const tar = require('tar')
 const {remote} = require('electron')
 const semver = require('semver')
 
@@ -15,10 +16,11 @@ Updater.checkUpdates = function () {
         got.head(repoUrl)
         .then((res) => {
             let latestTag = res.socket._httpMessage.path.split('/').pop()
-            console.log(latestTag)
             if (semver.lt(curver, latestTag)) {
+                console.log('New version: ' + latestTag)
                 resolve(latestTag)
             } else {
+                console.log('No updates.')
                 resolve(false)
             }
         })
@@ -31,18 +33,12 @@ Updater.checkUpdates = function () {
 
 Updater.doUpdate = function (version) {
     return new Promise(function (resolve, reject) {
-        gotZip(zipUrl + version + '.zip', {
-            dest: './.tmp',
-            extract: true,
-            cleanup: true,
-            exclude: ['readme.md'],
-            strip: 0
-        }).then(function () {
-            resolve()
-        }).catch(function (err) {
-            console.log('Error [updater] ' + err)
-            reject('Impossible de télécharger les mises à jour pour l\'instant.')
+        got.stream(zipUrl + version + '.tar.gz').pipe(zlib.createGunzip()).pipe(tar.Extract({path: remote.app.getAppPath(), strip: 1}))
+        .on('error', (err) => {
+            console.log('Error [untar]' + err)
+            reject('Impossible d\'installer les mises à jour pour l\'instant.')
         })
+        .on('end', () => resolve());
     })
 }
 
