@@ -18,20 +18,31 @@ HowsApp.oninit = function () {
         console.log('Welcome to How\'s Biz by Jean-Francois Desrochers')
         AppLoader.status.msg('Vérifications des mises à jour...')
         Updater.checkUpdates()
-        .then((shouldUpdate) => {
-            if (shouldUpdate) {
-                //perform update here
+        .then((newVersion) => {
+            if (newVersion) {
+                Updater.doUpdate(newVersion)
+                .then(() => {
+                    //location.reload()
+                    console.log('done')
+                })
+                .catch((err) => {
+                    AppLoader.status.err(err)
+                    setTimeout(() => {
+                        HowsApp.app.ready = true
+                        m.redraw()
+                    }, 3000)
+                })
+            } else {
+                HowsApp.app.ready = true
+                m.redraw()
             }
         })
         .catch((err) => {
             AppLoader.status.err(err)
-            return new Promise((resolve) => {
-                setTimeout(resolve, 3000)
-            })
-        })
-        .then(() => {
-            HowsApp.app.ready = true
-            m.redraw()
+            setTimeout(() => {
+                HowsApp.app.ready = true
+                m.redraw()
+            }, 3000)
         })
     }
 }
