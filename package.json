@@ -5,7 +5,7 @@
   "main": "main.js",
   "scripts": {
     "package-win": "electron-packager . --overwrite --platform=win32 --arch=x64 --icon=Icon.ico --prune=true --out=../../Desktop/howsbiz-dist --win32metadata.CompanyName=\"Jean-Francois Desrochers\" --win32metadata.FileDescription=\"How's Biz par Jean-Francois Desrochers\" --win32metadata.ProductName=\"How's Biz par Jean-Francois Desrochers\" --electron-version=1.4.15",
-    "package-osx": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=Icon.icns --prune=true --out=../../Desktop/howsbiz-dist --win32metadata.CompanyName=\"Jean-Francois Desrochers\" --win32metadata.FileDescription=\"How's Biz par Jean-Francois Desrochers\" --win32metadata.ProductName=\"How's Biz par Jean-Francois Desrochers\" --electron-version=1.4.15"
+    "package-osx": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=Icon.icns --prune=true --out=../../Desktop/howsbiz-dist --electron-version=1.4.15"
   },
   "author": "Jean-Francois Desrochers",
   "license": "ISC",
