@@ -1,6 +1,6 @@
 const m = require('mithril')
 const Updater = require('./updater.js')
-
+let {remote} = require('electron')
 const AppLoader = require('./ui/loader.js')
 const {AccountsUI} = require('./ui/accounts.js')
 const MainWindow = require('./ui/mainwindow.js')
@@ -23,7 +23,8 @@ HowsApp.oninit = function () {
                 AppLoader.status.msg('Mise à jour en cours...')
                 Updater.doUpdate(newVersion)
                 .then(() => {
-                    location.reload()
+                    remote.app.relaunch()
+                    remote.app.exit()
                 })
                 .catch((err) => {
                     AppLoader.status.err(err)
