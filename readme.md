@@ -1,4 +1,4 @@
-# How's Biz par Jean-François Desrochers
+# How's Biz par Jean-François Desrochers (version web)
 
 ### Pré-Requis
 
@@ -13,12 +13,6 @@
 git clone https://github.com/jfdesrochers/howsbiz.git
 cd howsbiz
 npm install
-```
-
-#### Installer Electron
-
-```bash
-npm install -g electron
 ```
 
 #### Créer un env.json
@@ -46,5 +40,5 @@ Une fois les services préparés, créez un fichier `env.json` dans le dossier `
 ### Exécuter
 
 ```bash
-electron .
+./buildrun.sh
 ```
