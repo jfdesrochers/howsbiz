@@ -54,7 +54,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false
 }))
-app.use(bodyParser.json())
+app.use(bodyParser.json({limit: '5mb'}))
 app.use(passport.initialize())
 app.use(passport.session())
 
