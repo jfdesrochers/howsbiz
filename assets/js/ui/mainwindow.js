@@ -3,7 +3,7 @@ const Property = require('../utils/Property.js')
 const {UniqueRandom, ModalWindow} = require('../utils/misc.js')
 const {getWeekNo, getAllWeeks} = require('../utils/dateutils.js')
 const EventEmitter = require('events')
-const $ = window.$ || require('../../vendor/js/jquery-2.2.4.min.js')
+const $ = window.$ || require('jquery')
 const _ = require('lodash')
 
 const AppLoader = require('./loader.js')
@@ -50,12 +50,12 @@ MainWindow.oninit = function (vnode) {
     this.dbError = Property('')
     this.dbinterval = null
     this.dbintervalLoad = () => {
-        Database.getUsers(HBData.lastUpdate)
+        Database.getUsers(this.user.district, HBData.lastUpdate)
         .then((userlist) => {
-            _.assign(HBData.users, _.keyBy(userlist, (val) => val._id.toHexString()))
+            _.assign(HBData.users, _.keyBy(userlist, (val) => val._id))
             Database.getHBs(this.user.district, this.curWeek(), HBData.lastUpdate)
             .then((hblist) => {
-                _.assign(HBData.hbs, _.keyBy(hblist, (val) => val._id.toHexString()))
+                _.assign(HBData.hbs, _.keyBy(hblist, (val) => val._id))
                 HBData.lastUpdate = new Date()
                 this.mainEvents.emit('rebinddata')
                 m.redraw()
@@ -72,16 +72,16 @@ MainWindow.oninit = function (vnode) {
     this.hasEditor = Property(false)
 
     this.loaderReady = () => {
-        Database.getUsers()
+        Database.getUsers(this.user.district)
         .then((userlist) => {
-            HBData.users = _.keyBy(userlist, (val) => val._id.toHexString())
+            HBData.users = _.keyBy(userlist, (val) => val._id)
             Database.getHBs(this.user.district, this.curWeek())
             .then((hblist) => {
-                HBData.hbs = _.keyBy(hblist, (val) => val._id.toHexString())
+                HBData.hbs = _.keyBy(hblist, (val) => val._id)
                 HBData.lastUpdate = new Date()
                 let hbid = _.find(HBData.hbs, (o) => {return (o.store === this.user.store && o.week === this.curWeek())})
                 if (hbid) {
-                    this.myHB(hbid._id.toHexString())
+                    this.myHB(hbid._id)
                 } else {
                     this.myHB('')
                 }
@@ -179,7 +179,7 @@ MainWindow.view = function (vnode) {
                 ]) : ''
             ]),
             m('div.list-wrapper', m('ul.list-group', _.map(_.sortBy(HBData.hbs, (o) => parseInt(o.store)), (o) => {
-                let oid = o._id.toHexString()
+                let oid = o._id
                 return m('a[href="#"].list-group-item.fadein' + (this.curView() == oid ? '.active' : ''), {key: oid, onclick: () => {
                     this.curView(oid)
                     m.redraw()

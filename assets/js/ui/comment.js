@@ -1,7 +1,7 @@
 const m = require('mithril')
 const Property = require('../utils/Property.js')
-const {MediumEditor} = require('../../vendor/js/medium-editor.min.js')
-const $ = window.$ || require('../../vendor/js/jquery-2.2.4.min.js')
+const MediumEditor = require('../../vendor/js/medium-editor.min.js')
+const $ = window.$ || require('jquery')
 
 const AddComment = {}
 
@@ -33,7 +33,8 @@ AddComment.oncreate = function () {
             targetCheckboxText: 'Open in new window'
         },
         autoLink: true,
-        elementsContainer: document.getElementById('addcomment')
+        elementsContainer: document.getElementById('addcomment'),
+        targetBlank: true
     })
 }
 

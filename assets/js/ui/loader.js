@@ -1,5 +1,5 @@
 const m = require('mithril')
-const $ = window.$ || require('../../vendor/js/jquery-2.2.4.min.js')
+const $ = window.$ || require('jquery')
 
 const AppLoader = {}
 

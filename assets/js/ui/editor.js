@@ -1,8 +1,8 @@
 const m = require('mithril')
-const {MediumEditor} = require('../../vendor/js/medium-editor.min.js')
+const MediumEditor = require('../../vendor/js/medium-editor.min.js')
 const Property = require('../utils/Property.js')
 const {Database} = require('../data.js')
-const $ = window.$ || require('../../vendor/js/jquery-2.2.4.min.js')
+const $ = window.$ || require('jquery')
 const _ = require('lodash')
 
 const HBEditor = {}
@@ -44,7 +44,7 @@ HBEditor.oninit = function (vnode) {
         if (!this.parent.editorDirty()) return
         return new Promise((resolve, reject) => {
             this.saving(true)
-            let userid = this.parent.user._id.toHexString()
+            let userid = this.parent.user._id
             if (this.contributions.salesCom && _.indexOf(this.HB.salesCont, userid) === -1) {
                 this.HB.salesCont.push(userid)
             }
@@ -55,7 +55,8 @@ HBEditor.oninit = function (vnode) {
                 this.HB.devCont.push(userid)
             }
             Database.saveHB(this.HB)
-            .then(() => {
+            .then((newHB) => {
+                _.assign(this.HB, newHB)
                 this.parent.editorDirty(false)
                 this.saving(false)
                 resolve()
@@ -90,28 +91,6 @@ HBEditor.oninit = function (vnode) {
         image.src = src;
     }
 
-    this.dataUriToBuffer = function (uri) {
-        uri = uri.replace(/\r?\n/g, '');
-        var firstComma = uri.indexOf(',');
-        if (-1 === firstComma || firstComma <= 4) return null;
-        var meta = uri.substring(5, firstComma).split(';');
-        var base64 = false;
-        var charset = 'US-ASCII';
-        for (var i = 0; i < meta.length; i++) {
-            if ('base64' == meta[i]) {
-            base64 = true;
-            } else if (0 == meta[i].indexOf('charset=')) {
-            charset = meta[i].substring(8);
-            }
-        }
-        var data = unescape(uri.substring(firstComma + 1));
-        var encoding = base64 ? 'base64' : 'ascii';
-        var buffer = new Buffer(data, encoding);
-        buffer.type = meta[0] || 'text/plain';
-        buffer.charset = charset;
-        return buffer;
-    }
-
     this.loadImage = (files) => {
         if (files.length > 0) {
             this.imgLoading(true)
@@ -125,11 +104,11 @@ HBEditor.oninit = function (vnode) {
             let reader = new FileReader();
             reader.onload = (e) => {
                 this.render(e.target.result, true, (img) => {
-                    Database.uploadFile(this.parent.user.store, this.parent.curWeek(), this.dataUriToBuffer(img))
+                    Database.uploadFile(this.parent.user.store, this.parent.curWeek(), img)
                     .then ((url) => {
                         this.parent.editorDirty(true)
-                        this.HB.picUrl = url
-                        this.imgSrc(url + '&_t=' + new Date().getTime())
+                        this.HB.picUrl = url.url
+                        this.imgSrc(url.url + '&_t=' + new Date().getTime())
                         this.imgLoading(false)
                     })
                     .catch ((err) => {
@@ -162,7 +141,8 @@ HBEditor.oncreate = function () {
             targetCheckbox: false,
             targetCheckboxText: 'Open in new window'
         },
-        autoLink: true
+        autoLink: true,
+        targetBlank: true
     })
     this.editor.setContent(this.HB.salesCom, 0)
     this.editor.setContent(this.HB.servCom, 1)
@@ -264,7 +244,7 @@ HBEditor.view = function () {
             this.parent.editorDirty(true)
             this.doSave()
             .then(() => {
-                let oid = this.HB._id.toHexString()
+                let oid = this.HB._id
                 if (this.HBData.hbs[oid]) {
                     _.assign(this.HBData.hbs[oid], this.HB)
                 } else {

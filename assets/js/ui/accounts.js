@@ -1,6 +1,6 @@
 const m = require('mithril')
 const Property = require('../utils/Property.js')
-const $ = window.$ || require('../../vendor/js/jquery-2.2.4.min.js')
+const $ = window.$ || require('jquery')
 
 const {ValidatingInput, ValidatingSelect} = require('./components.js')
 const {districtList, storeList, positionList, Database} = require('../data.js')
@@ -157,17 +157,16 @@ const AccountsLogin = {
                 this.isLoading(true)
                 Database.loginUser(UserAccount)
                 .then((user) => {
-                    delete user.password
                     UserAccount.reset()
                     this.app.user = user
                     this.isLoading(false)
                 })
-                .catch((rsn) => {
-                    if (rsn.errcode == 'e_badpassword') {
+                .catch((e) => {
+                    if (e.message == 'Unauthorized') {
                         console.log('Error [MongoDB] Wrong username or password')
                         this.validations['loginUser'].validate(false, 'Le nom d\'utilisateur ou le mot de passe entré est incorrect.')
                     } else {
-                        console.log('Error [MongoDB] ' + rsn.errmsg)
+                        console.log('Error [MongoDB] ' + e.message)
                         this.validations['loginUser'].validate(false, 'Une erreur est survenue lors de la connexion au serveur! Veuillez réessayer ultérieurement!')
                     }
                     this.isLoading(false)
