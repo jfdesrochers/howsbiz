@@ -57,6 +57,8 @@ HBEditor.oninit = function (vnode) {
             Database.saveHB(this.HB)
             .then((newHB) => {
                 _.assign(this.HB, newHB)
+                this.HBData.hbs[this.HB._id] = this.HB
+                this.parent.myHB(this.HB._id)
                 this.parent.editorDirty(false)
                 this.saving(false)
                 resolve()

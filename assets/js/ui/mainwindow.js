@@ -117,6 +117,7 @@ MainWindow.view = function (vnode) {
                 }
                 this.dbinterval = setInterval(this.dbintervalLoad, 60000)
             })
+            $('[data-toggle="tooltip"]').tooltip({placement: 'auto top', html: true, container: 'body'})
         },
         onremove: () => {
             clearInterval(this.dbinterval)
@@ -180,6 +181,9 @@ MainWindow.view = function (vnode) {
             ]),
             m('div.list-wrapper', m('ul.list-group', _.map(_.sortBy(HBData.hbs, (o) => parseInt(o.store)), (o) => {
                 let oid = o._id
+                let comments = Object.keys(o.comments)
+                let views = Object.keys(o.views)
+                let likes = Object.keys(o.likes)
                 return m('a[href="#"].list-group-item.fadein' + (this.curView() == oid ? '.active' : ''), {key: oid, onclick: () => {
                     this.curView(oid)
                     m.redraw()
@@ -188,9 +192,9 @@ MainWindow.view = function (vnode) {
                     m('div.media-body', [
                         m('div.media-heading.no-margin', storeList[o.district][o.store]),
                         o.status === 'published' ? [
-                            m('span.badge.mr5', [m('span.mr5', Object.keys(o.comments).length), m('span.glyphicon.glyphicon-comment')]),
-                            m('span.badge.mr5', [m('span.mr5', Object.keys(o.likes).length), m('span.glyphicon.glyphicon-heart')]),
-                            m('span.badge', [m('span.mr5', Object.keys(o.views).length), m('span.glyphicon.glyphicon-eye-open')])
+                            m('span.badge.mr5', [m('span.mr5', comments.length), m('span.glyphicon.glyphicon-comment')]),
+                            m('span.badge.mr5', {'data-toggle': 'tooltip', 'title': likes.map((c) => HBData.users[c].firstname + ' ' + HBData.users[c].lastname).join('<br>')}, [m('span.mr5', likes.length), m('span.glyphicon.glyphicon-heart')]),
+                            m('span.badge', {'data-toggle': 'tooltip', 'title': views.map((c) => HBData.users[c].firstname + ' ' + HBData.users[c].lastname).join('<br>')}, [m('span.mr5', views.length), m('span.glyphicon.glyphicon-eye-open')])
                         ] : m('span.muted', 'Pas encore publié')
                     ])
                 ]))
