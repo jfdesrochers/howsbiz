@@ -117,6 +117,8 @@ MainWindow.view = function (vnode) {
                 }
                 this.dbinterval = setInterval(this.dbintervalLoad, 60000)
             })
+        },
+        onupdate: () => {
             $('[data-toggle="tooltip"]').tooltip({placement: 'auto top', html: true, container: 'body'})
         },
         onremove: () => {

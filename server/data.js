@@ -139,6 +139,7 @@ const Database = {
             .then(function(db) {
                 let hbs = db.collection('howsbiz')
                 let query = {'district': hbdata.district, 'week': hbdata.week}
+                if (hbdata.store) query['store'] = hbdata.store
                 if (hbdata.lastupdate) {
                     hbdata.lastupdate = new Date(hbdata.lastupdate)
                     query['lastModified'] = {$gte: hbdata.lastupdate}
@@ -331,7 +332,118 @@ const Database = {
                 reject(makeError('e_mongoerr', err))
             })
         })
-    }
+    },
+    emailGetStores: function(emaildata) {
+        return new Promise(function (resolve, reject) {
+            MongoClient.connect(env.DBURL)
+            .then(function(db) {
+                let emails = db.collection('email')
+                let query = {district: emaildata.district, week: emaildata.week}
+                emails.findOne(query)
+                .then(function (email) {
+                    db.close()
+                    if (email) {
+                        resolve(email.storeList)
+                    } else {
+                        resolve([])
+                    }
+                })
+                .catch(function (err) {
+                    db.close()
+                    reject(makeError('e_mongoerr', err))
+                })
+
+            })
+            .catch(function (err) {
+                reject(makeError('e_mongoerr', err))
+            })
+        }) 
+    },
+    emailSetStores: function(emaildata) {
+        return new Promise(function (resolve, reject) {
+            MongoClient.connect(env.DBURL)
+            .then(function(db) {
+                let emails = db.collection('email')
+                let query = {district: emaildata.district, week: emaildata.week}
+                emails.updateOne(query, {$set: {storeList: emaildata.storeList}}, {upsert: true})
+                .then(function () {
+                    db.close()
+                    resolve()
+                })
+                .catch(function (err) {
+                    db.close()
+                    reject(makeError('e_mongoerr', err))
+                })
+
+            })
+            .catch(function (err) {
+                reject(makeError('e_mongoerr', err))
+            })
+        }) 
+    },
+    emailGetUsers: function() {
+        return new Promise(function (resolve, reject) {
+            MongoClient.connect(env.DBURL)
+            .then(function(db) {
+                let users = db.collection('users')
+                users.aggregate([
+                    { $group: {_id: {district: "$district", store: "$store"}, emails: {$push: "$email"}} },
+                    { $sort: {'_id.store': 1} }
+                    ]).toArray()
+                .then(function (userlist) {
+                    db.close()
+                    resolve(userlist)
+                })
+                .catch(function (err) {
+                    db.close()
+                    reject(makeError('e_mongoerr', err))
+                })
+
+            })
+            .catch(function (err) {
+                reject(makeError('e_mongoerr', err))
+            })
+        }) 
+    },
+    emailGetComments: function (commentsdata) {
+        return new Promise(function (resolve, reject) {
+            MongoClient.connect(env.DBURL)
+            .then(function(db) {
+                let hbs = db.collection('comments')
+                let query = {hbid: commentsdata.hbid}
+                if (commentsdata.lastupdate) {
+                    commentsdata.lastupdate = new Date(commentsdata.lastupdate)
+                    query['postDate'] = {$gte: commentsdata.lastupdate}
+                }
+                hbs.aggregate([
+                    {
+                        $match: query
+                    },
+                    {
+                        $lookup: {
+                            from: 'users',
+                            localField: 'userid',
+                            foreignField: '_id',
+                            as: 'fromUser'
+                        }
+                    },
+                    { $unwind: { path: "$fromUser", preserveNullAndEmptyArrays: true }}
+                ]).toArray()
+                .then(function (commentlist) {
+                    db.close()
+                    resolve(commentlist)
+                })
+                .catch(function (err) {
+                    db.close()
+                    reject(makeError('e_mongoerr', err))
+                })
+
+            })
+            .catch(function (err) {
+                reject(makeError('e_mongoerr', err))
+            })
+        })
+    },
 }
 
 module.exports.Database = Database

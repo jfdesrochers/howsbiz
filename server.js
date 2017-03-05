@@ -7,6 +7,7 @@ const path = require('path')
 const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
 const {Database} = require('./server/data.js')
+const mailHowsBiz = require('./server/mailhowsbiz.js')
 const env = require('./env.json')
 
 passport.use(new LocalStrategy(
@@ -87,6 +88,15 @@ app.post('/dbrequest', authenticated(), (req, res) => {
         })
     } catch(e) {
         throw e
+    }
+})
+
+app.post('/sendemails', authenticated(), (req, res) => {
+    try {
+        mailHowsBiz(req.body)
+        res.json({status: 'success'})
+    } catch(e) {
+        res.json({status: 'error', error: e})
     }
 })
 

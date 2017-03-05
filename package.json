@@ -1,6 +1,6 @@
 {
   "name": "howsbiz",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "How's Biz by J-F Desrochers",
   "main": "main.js",
   "scripts": {
@@ -21,7 +21,7 @@
     "medium-editor": "^5.22.2",
     "mithril": "^1.0.0",
     "mongodb": "^2.2.22",
-    "node-summary": "^1.1.0",
+    "mustache": "^2.3.0",
     "nodemailer": "^3.0.0",
     "passport": "^0.3.2",
     "passport-local": "^1.0.0",
