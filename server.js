@@ -67,36 +67,37 @@ app.post('/login', passport.authenticate('local'), (req, res) => {
     res.json(req.user)
 })
 
-app.post('/createuser', (req, res) => {
+app.post('/createuser', (req, res, next) => {
     Database.createUser(req.body)
     .then((result) => {
         res.json(result)
     })
     .catch((e) => {
-        throw e
+        return next(e)
     })
 })
 
-app.post('/dbrequest', authenticated(), (req, res) => {
+app.post('/dbrequest', authenticated(), (req, res, next) => {
     try {
         Database[req.body.endpoint](req.body.data)
         .then((result) => {
             res.json(result)
         })
         .catch((e) => {
-            throw e
+            return next(e)
         })
     } catch(e) {
-        throw e
+        return next(e)
     }
 })
 
-app.post('/sendemails', authenticated(), (req, res) => {
+app.post('/sendemails', authenticated(), (req, res, next) => {
     try {
         mailHowsBiz(req.body)
         res.json({status: 'success'})
     } catch(e) {
         res.json({status: 'error', error: e})
+        return next(e)
     }
 })
 
