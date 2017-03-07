@@ -116,10 +116,8 @@ MainWindow.view = function (vnode) {
                     vnode.attrs.onready()
                 }
                 this.dbinterval = setInterval(this.dbintervalLoad, 60000)
+                $('[data-toggle="tooltip"]').tooltip({placement: 'auto top', html: true, container: 'body'})
             })
-        },
-        onupdate: () => {
-            $('[data-toggle="tooltip"]').tooltip({placement: 'auto top', html: true, container: 'body'})
         },
         onremove: () => {
             clearInterval(this.dbinterval)
@@ -195,8 +193,8 @@ MainWindow.view = function (vnode) {
                         m('div.media-heading.no-margin', storeList[o.district][o.store]),
                         o.status === 'published' ? [
                             m('span.badge.mr5', [m('span.mr5', comments.length), m('span.glyphicon.glyphicon-comment')]),
-                            m('span.badge.mr5', {'data-toggle': 'tooltip', 'title': likes.map((c) => HBData.users[c].firstname + ' ' + HBData.users[c].lastname).join('<br>')}, [m('span.mr5', likes.length), m('span.glyphicon.glyphicon-heart')]),
-                            m('span.badge', {'data-toggle': 'tooltip', 'title': views.map((c) => HBData.users[c].firstname + ' ' + HBData.users[c].lastname).join('<br>')}, [m('span.mr5', views.length), m('span.glyphicon.glyphicon-eye-open')])
+                            m('span.badge.mr5', {'data-toggle': 'tooltip', 'data-original-title': likes.map((c) => HBData.users[c].firstname + ' ' + HBData.users[c].lastname).join('<br>')}, [m('span.mr5', likes.length), m('span.glyphicon.glyphicon-heart')]),
+                            m('span.badge', {'data-toggle': 'tooltip', 'data-original-title': views.map((c) => HBData.users[c].firstname + ' ' + HBData.users[c].lastname).join('<br>')}, [m('span.mr5', views.length), m('span.glyphicon.glyphicon-eye-open')])
                         ] : m('span.muted', 'Pas encore publié')
                     ])
                 ]))
