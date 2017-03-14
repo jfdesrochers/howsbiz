@@ -1,0 +1,27 @@
+Sommaire des How's Biz
+{{week}}
+
+Voici un résumé des How's Biz publiés pour la semaine dernière. Pour lire les descriptions complètes, commenter ou ajouter la mention "J'aime", connectez-vous sur le site https://howsbiz.jfdft.com
+
+Ventes
+------
+
+{{#sales}}
+{{store}}: {{summary}}
+{{/sales}}
+
+Services
+------
+
+{{#serv}}
+{{store}}: {{summary}}
+{{/serv}}
+
+Développement des affaires
+------
+
+{{#dev}}
+{{store}}: {{summary}}
+{{/dev}}
+
+Bonne Lecture!
