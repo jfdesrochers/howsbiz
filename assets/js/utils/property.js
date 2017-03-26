@@ -1,23 +1,30 @@
 ///////////////////////////
 // Property
 // Defines a basic getter/setter
-//
-// usage: let myprop = Property('hello', [callback])
-// Will create variable myprop with default value 'hello'
-// Set / Change value: myprop('newvalue')
-// Get value: myprop()
-//
-// If you set a callback, it will be called when you set a new value
 
+// Misc : Escape RegEx Special Characters: /[$-\/?[-^{|}]/g
+
+/**
+ * Create a getter-setter property
+ * Usage: let myprop = Property('Initial Value');
+ * Set / Change Value: myprop('New Value');
+ * Get Value: console.log(myprop()); // Returns 'New Value'
+ * If defined, callback will be called when the value is changed with the params (newValue, oldValue) return false to cancel the value change.
+ * @constructor
+ * @param {*} defaultProp - Default value for the property. Mandatory.
+ * @param {function} callback - Callback to be called if the property is changed.
+ */
 const Property = function (defaultProp, callback) {
     let curValue = defaultProp
     return function (propValue) {
         if (propValue !== undefined) {
             let oldValue = curValue
-            curValue = propValue
             if (typeof callback === 'function') {
-                callback(propValue, oldValue)
+                if (callback(propValue, oldValue) === false) {
+                    return curValue
+                }
             }
+            curValue = propValue
         }
         return curValue
     }

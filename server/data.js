@@ -405,6 +405,28 @@ const Database = {
             })
         }) 
     },
+    emailGetEmails: function(store) {
+        return new Promise(function (resolve, reject) {
+            MongoClient.connect(env.DBURL)
+            .then(function(db) {
+                let users = db.collection('users')
+                let query = {store: store}
+                users.find(query).project({'email': 1, '_id': 0}).toArray()
+                .then(function (userlist) {
+                    db.close()
+                    resolve(userlist)
+                })
+                .catch(function (err) {
+                    db.close()
+                    reject(makeError('e_mongoerr', err))
+                })
+
+            })
+            .catch(function (err) {
+                reject(makeError('e_mongoerr', err))
+            })
+        }) 
+    },
     emailGetComments: function (commentsdata) {
         return new Promise(function (resolve, reject) {
             MongoClient.connect(env.DBURL)
