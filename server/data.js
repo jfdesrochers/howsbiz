@@ -274,6 +274,26 @@ const Database = {
             })
         })
     },
+    publishAllHB: function (week) {
+        return new Promise(function (resolve, reject) {
+            MongoClient.connect(env.DBURL)
+            .then(function(db) {
+                let hbs = db.collection('howsbiz')
+                hbs.update({'week': week, 'status': {$ne: 'published'}}, {$set: {'status': 'published'}})
+                .then(function () {
+                    db.close()
+                    resolve()
+                })
+                .catch(function (err) {
+                    db.close()
+                    reject(makeError('e_mongoerr', err))
+                })
+            })
+            .catch(function (err) {
+                reject(makeError('e_mongoerr', err))
+            })
+        })
+    },
     uploadFile: function(filedata) {
         const dbx = new Dropbox({accessToken: env.DROPBOXTOKEN})
         return new Promise(function (resolve, reject) {
