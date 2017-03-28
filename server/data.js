@@ -279,7 +279,7 @@ const Database = {
             MongoClient.connect(env.DBURL)
             .then(function(db) {
                 let hbs = db.collection('howsbiz')
-                hbs.update({'week': week, 'status': {$ne: 'published'}}, {$set: {'status': 'published'}})
+                hbs.update({'week': week, 'status': {$ne: 'published'}}, {$set: {'status': 'published'}}, {multi: true})
                 .then(function () {
                     db.close()
                     resolve()
