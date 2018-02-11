@@ -16,6 +16,7 @@ const UserAccount = {
     district: Property('-1'),
     store: Property('-1'),
     position: Property('-1'),
+    role: Property('20'),
     reset: () => {
         UserAccount.firstname('')
         UserAccount.lastname('')
@@ -26,6 +27,7 @@ const UserAccount = {
         UserAccount.district('-1')
         UserAccount.store('-1')
         UserAccount.position('-1')
+        UserAccount.role('20')
     }
 }
 
@@ -158,7 +160,11 @@ const AccountsLogin = {
                 Database.loginUser(UserAccount)
                 .then((user) => {
                     UserAccount.reset()
-                    this.app.user = user
+                    if (user.serviceAccount) {
+                        this.parent.action = 'newacct'
+                    } else {
+                        this.app.user = user
+                    }
                     this.isLoading(false)
                 })
                 .catch((e) => {
@@ -172,12 +178,6 @@ const AccountsLogin = {
                     this.isLoading(false)
                 })
             }
-            return false
-        }
-        this.createAccount = (e) => {
-            e.preventDefault()
-            this.parent.action = 'newacct'
-            m.redraw()
             return false
         }
     },
@@ -194,7 +194,8 @@ const AccountsLogin = {
                     fieldValue: UserAccount.username,
                     validPattern: /.+/gi,
                     errMessage: 'Ce champ ne peut pas être vide!',
-                    actions: this.validations
+                    actions: this.validations,
+                    disableMobileFeatures: true
                 }}),
                 m(ValidatingInput, {options:{
                     name: 'loginPass',
@@ -207,8 +208,7 @@ const AccountsLogin = {
                     actions: this.validations
                 }}),
                 m('div.btn-group.btn-group-justified', [
-                    m('div.btn-group', m('button.btn.btn-primary' + (this.isLoading() ? '.disabled' : ''), {type: 'submit'}, this.isLoading() ? 'Chargement...' : 'S\'authentifier')),
-                    m('div.btn-group',  m('button.btn.btn-default' + (this.isLoading() ? '.disabled' : ''), {type: 'button', onclick: this.createAccount}, 'Créer un compte'))
+                    m('div.btn-group', m('button.btn.btn-primary' + (this.isLoading() ? '.disabled' : ''), {type: 'submit'}, this.isLoading() ? 'Chargement...' : 'S\'authentifier'))
                 ])
             ])
         ])
@@ -222,8 +222,9 @@ const AccountsCreate = {
         return (value !== '-1')
     },
     oninit: function (vnode) {
-        this.app = vnode.attrs.app,
-        this.parent = vnode.attrs.parent,
+        this.app = vnode.attrs.app
+        this.parent = vnode.attrs.parent
+        this.userlist = []
         this.goCreate = (e) => {
             e.preventDefault()
             let valid = Object.keys(this.validations).filter((val) => !this.validations[val].validate()).length === 0
@@ -231,7 +232,7 @@ const AccountsCreate = {
                 this.isLoading(true)
                 Database.createUser(UserAccount)
                 .then(() => {
-                    this.parent.action = 'login'
+                    UserAccount.reset()
                     this.isLoading(false)
                 })
                 .catch((rsn) => {
@@ -253,11 +254,31 @@ const AccountsCreate = {
             m.redraw()
             return false
         }
+        this.refreshUserList = () => {
+            Database.listUsers().then((userlist) => {
+                userlist.sort((x, y) => ((x.username < y.username) ? -1 : ((x.username > y.username) ? 1 : 0)))
+                this.userlist = userlist
+            }).catch((e) => {
+                console.error(e)
+            })
+        }
+        this.refreshUserList()
     },
     oncreate: Accounts_oncreate,
     view: function () {
         return m('div.jumbotron.acctframe.uicontainer', [
             m('img.mainlogo', {src: './assets/img/logo.svg'}),
+            this.userlist.length > 0 ? [
+                m('h3', 'Liste des utilisateurs'),
+                m('ul.list-group.userlist', this.userlist.map((o) => {
+                    return m('li.list-group-item', {key: o.username}, [
+                        o.username,
+                        !o.serviceAccount ? m('button.btn.btn-danger.btn-xs.pull-right.ml5', m('span.glyphicon.glyphicon-trash')) : '',
+                        m('button.btn.btn-warning.btn-xs.pull-right', m('span.glyphicon.glyphicon-pencil'))
+                    ])
+                }))
+            ] : '',
+            m('h3', 'Nouvel utilisateur'),
             m('form', {action: '', onsubmit: this.goCreate, oncreate: () => $('#firstname').focus()}, [
                 m(ValidatingInput, {options: {
                     name: 'firstname',
@@ -286,7 +307,6 @@ const AccountsCreate = {
                     showValid: true,
                     fieldValue: UserAccount.email,
                     validPattern: /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/,
-                    stdMessage: 'Veuillez, si possible, spécifier votre adresse courriel de travail (@staples.ca ou @busdep.com)',
                     errMessage: 'Vous devez spécifier une adresse courriel valide!',
                     actions: this.validations
                 }}),
@@ -329,6 +349,17 @@ const AccountsCreate = {
                     onvalidate: this.validateSelects,
                     actions: this.validations
                 }}),
+                UserAccount.role() === '80' ? m('div.alert.alert-warning', m.trust('<strong>Attention</strong>: Le rôle admimistrateur donne des grands pouvoirs et avec grands pouvoirs viennent de grandes responsabilités!')) : '',
+                m(ValidatingSelect, {options:{
+                    name: 'role',
+                    label: 'Rôle',
+                    showValid: true,
+                    fieldValue: UserAccount.role,
+                    choices: [['20', 'Utilisateur Régulier'], ['80', 'Administrateur']],
+                    errMessage: 'Veuillez choisir un poste!',
+                    onvalidate: this.validateSelects,
+                    actions: this.validations
+                }}),
                 m(ValidatingInput, {options:{
                     name: 'username',
                     type: 'text',
@@ -336,7 +367,6 @@ const AccountsCreate = {
                     showValid: true,
                     fieldValue: UserAccount.username,
                     validPattern: /.+/gi,
-                    stdMessage: 'Votre numéro d\'employé est recommandé; plus facile à retenir.',
                     errMessage: 'Ce champ ne peut pas être vide!',
                     actions: this.validations
                 }}),
@@ -362,7 +392,7 @@ const AccountsCreate = {
                 }}),
                 m('div.btn-group.btn-group-justified', [
                     m('div.btn-group', m('button.btn.btn-primary' + (this.isLoading() ? '.disabled' : ''), {type: 'submit'}, this.isLoading() ? 'Chargement...' : 'Créer le compte')),
-                    m('div.btn-group',  m('button.btn.btn-default' + (this.isLoading() ? '.disabled' : ''), {type: 'button', onclick: this.returnToAuth}, 'Annuler'))
+                    m('div.btn-group',  m('button.btn.btn-default' + (this.isLoading() ? '.disabled' : ''), {type: 'button', onclick: this.returnToAuth}, 'Retour'))
                 ])
             ])
         ])

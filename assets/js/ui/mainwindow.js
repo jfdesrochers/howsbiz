@@ -1,6 +1,6 @@
 const m = require('mithril')
 const Property = require('../utils/Property.js')
-const {UniqueRandom, ModalWindow} = require('../utils/misc.js')
+const {UniqueRandom, ModalWindow, toggleLoadIcon} = require('../utils/misc.js')
 const {getWeekNo, getAllWeeks} = require('../utils/dateutils.js')
 const EventEmitter = require('events')
 const $ = window.$ || require('jquery')
@@ -14,7 +14,6 @@ const {PasswordChange} = require('./accounts.js')
 const {Database, storeList} = require('../data.js')
 
 const HBData = {
-    users: {},
     hbs: [],
     lastUpdate: null
 }
@@ -38,7 +37,8 @@ const MainWindow = {}
 
 MainWindow.oninit = function (vnode) {
     this.user = vnode.attrs.app.user
-    this.weeks = getAllWeeks()
+    this.username = this.user.firstname + ' ' + this.user.lastname
+    this.weeks = getAllWeeks(true)
     this.curWeek = Property(String(getWeekNo(true)))
     this.randomColor = UniqueRandom(1, 11, true)
     this.editorDirty = Property(false, (cur, old) => {
@@ -50,20 +50,19 @@ MainWindow.oninit = function (vnode) {
     this.dbError = Property('')
     this.dbinterval = null
     this.dbintervalLoad = () => {
-        Database.getUsers(this.user.district, HBData.lastUpdate)
-        .then((userlist) => {
-            _.assign(HBData.users, _.keyBy(userlist, (val) => val._id))
-            Database.getHBs(this.user.district, this.curWeek(), HBData.lastUpdate)
-            .then((hblist) => {
-                _.assign(HBData.hbs, _.keyBy(hblist, (val) => val._id))
-                HBData.lastUpdate = new Date()
-                this.mainEvents.emit('rebinddata')
-                m.redraw()
-            })
+        toggleLoadIcon(true)
+        Database.getHBs(this.user.district, this.curWeek(), HBData.lastUpdate)
+        .then((hblist) => {
+            _.assign(HBData.hbs, _.keyBy(hblist, (val) => val._id))
+            HBData.lastUpdate = new Date()
+            this.mainEvents.emit('rebinddata')
+            m.redraw()
+            toggleLoadIcon(false)
         })
         .catch((err) => {
             console.log('Error [MongoDB] ' + err.errmsg)
             this.dbError('Une erreur est survenue lors de l\'accès aux données. Merci de réessayer.')
+            toggleLoadIcon(false)
         })
     }
 
@@ -71,34 +70,35 @@ MainWindow.oninit = function (vnode) {
     this.myHB = Property('')
     this.hasEditor = Property(false)
 
+    this.toggleSidebar = (e) => {
+        e.preventDefault()
+        document.getElementById('mainwindow').classList.toggle('open')
+    }
+
     this.loaderReady = () => {
-        Database.getUsers(this.user.district)
-        .then((userlist) => {
-            HBData.users = _.keyBy(userlist, (val) => val._id)
-            Database.getHBs(this.user.district, this.curWeek())
-            .then((hblist) => {
-                HBData.hbs = _.keyBy(hblist, (val) => val._id)
-                HBData.lastUpdate = new Date()
-                let hbid = _.find(HBData.hbs, (o) => {return (o.store === this.user.store && o.week === this.curWeek())})
-                if (hbid) {
-                    this.myHB(hbid._id)
+        Database.getHBs(this.user.district, this.curWeek())
+        .then((hblist) => {
+            HBData.hbs = _.keyBy(hblist, (val) => val._id)
+            HBData.lastUpdate = new Date()
+            let hbid = _.find(HBData.hbs, (o) => {return (o.store === this.user.store && o.week === this.curWeek())})
+            if (hbid) {
+                this.myHB(hbid._id)
+            } else {
+                this.myHB('')
+            }
+            if ((this.user.store !== '0') && ((this.myHB() && HBData.hbs[this.myHB()].status !== 'published') || (this.myHB() === ''))) {
+                this.curView('editor')
+                this.hasEditor(true)
+            } else {
+                this.hasEditor(false)
+                let keys = Object.keys(HBData.hbs)
+                if (keys.length > 0) {
+                    this.curView(keys[0])
                 } else {
-                    this.myHB('')
+                    this.curView('emptyview')
                 }
-                if ((this.user.store !== '0') && ((this.myHB() && HBData.hbs[this.myHB()].status !== 'published') || (this.myHB() === ''))) {
-                    this.curView('editor')
-                    this.hasEditor(true)
-                } else {
-                    this.hasEditor(false)
-                    let keys = Object.keys(HBData.hbs)
-                    if (keys.length > 0) {
-                        this.curView(keys[0])
-                    } else {
-                        this.curView('emptyview')
-                    }
-                }
-                m.redraw()
-            })
+            }
+            m.redraw()
         })
         .catch((err) => {
             console.log('Error [MongoDB] ' + err.errmsg)
@@ -109,7 +109,7 @@ MainWindow.oninit = function (vnode) {
 
 MainWindow.view = function (vnode) {
     return HBData.lastUpdate === null ? m(AppLoader, {onready: this.loaderReady, message: 'Chargement des données en cours...'}) :
-    m('div.mainwindow.uicontainer', {
+    m('div#mainwindow.mainwindow.uicontainer', {
         oncreate: (vdom) => {
             $(vdom.dom).fadeIn('slow', () => {
                 if (typeof vnode.attrs.onready === 'function') {
@@ -124,6 +124,7 @@ MainWindow.view = function (vnode) {
         }
     }, [
         m('div.sidebar', [
+            m('button.btn.btn-default#sidebarbutton', {onclick: this.toggleSidebar}),
             m('div.btn-group', [
                 m('button.btn.btn-default.btn-block.dropdown-toggle', {'data-toggle': 'dropdown'}, m('div.media', [
                     m('div.media-left', m('div.bubble-item', m('div.bubble-inner', this.user.firstname[0] + this.user.lastname[0]))),
@@ -133,16 +134,17 @@ MainWindow.view = function (vnode) {
                     ])
                 ])),
                 m('ul.btn-block.dropdown-menu.dropdown-menu-right', [
-                    m('li', m('a[href=""]', {onclick: (e) => {
-                        e.preventDefault()
-                        m.mount(document.getElementById('modalcontainer'), ModalWindow(PasswordChange, {user: vnode.state.user, done: () => m.mount(document.getElementById('modalcontainer'), null)}))
-                        return false
-                    }}, 'Changer de mot de passe...')),
-                    m('li.divider'),
+                    this.user.role === '80' ? [
+                        m('li', m('a[href=""]', {onclick: (e) => {
+                            e.preventDefault()
+                            m.mount(document.getElementById('modalcontainer'), ModalWindow(PasswordChange, {user: vnode.state.user, done: () => m.mount(document.getElementById('modalcontainer'), null)}))
+                            return false
+                        }}, 'Changer de mot de passe...')),
+                        m('li.divider')
+                    ] : '',
                     m('li', m('a[href="#"]', {onclick: () => {
                         vnode.attrs.app.user = null
                         HBData.hbs = []
-                        HBData.users = {}
                         HBData.lastUpdate = null
                     }}, 'Se Déconnecter'))
                 ])
@@ -161,7 +163,6 @@ MainWindow.view = function (vnode) {
                     m('select.form-control#curWeek', {onchange: (e) => {
                         this.curWeek(e.target.value)
                         HBData.hbs = []
-                        HBData.users = {}
                         HBData.lastUpdate = null
                     }}, 
                         this.weeks.map((item) => {
@@ -193,13 +194,14 @@ MainWindow.view = function (vnode) {
                         m('div.media-heading.no-margin', storeList[o.district][o.store]),
                         o.status === 'published' ? [
                             m('span.badge.mr5', [m('span.mr5', comments.length), m('span.glyphicon.glyphicon-comment')]),
-                            m('span.badge.mr5', {'data-toggle': 'tooltip', 'data-original-title': likes.map((c) => HBData.users[c].firstname + ' ' + HBData.users[c].lastname).join('<br>')}, [m('span.mr5', likes.length), m('span.glyphicon.glyphicon-heart')]),
-                            m('span.badge', {'data-toggle': 'tooltip', 'data-original-title': views.map((c) => HBData.users[c].firstname + ' ' + HBData.users[c].lastname).join('<br>')}, [m('span.mr5', views.length), m('span.glyphicon.glyphicon-eye-open')])
+                            m('span.badge.mr5', {'data-toggle': 'tooltip', 'data-original-title': likes.join('<br>')}, [m('span.mr5', likes.length), m('span.glyphicon.glyphicon-heart')]),
+                            m('span.badge', {'data-toggle': 'tooltip', 'data-original-title': views.join('<br>')}, [m('span.mr5', views.length), m('span.glyphicon.glyphicon-eye-open')])
                         ] : m('span.muted', 'Pas encore publié')
                     ])
                 ]))
             })))
         ]),
+        m('div.sidebarhotbox', {onclick: this.toggleSidebar}),
         m('div.contentwindow', this.curView() === 'editor' ? m(HBEditor, {parent: this, HBData: HBData, HB: (this.myHB() ? HBData.hbs[this.myHB()] : undefined)}) : 
             this.curView() === 'emptyview' ? m(EmptyView) :
             m(HBViewer, {key: this.curView(), parent: this, HBData: HBData, HBIndex: this.curView()})

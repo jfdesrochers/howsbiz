@@ -60,7 +60,7 @@ Database.emailGetUsers()
     promise.then(() => {
         Object.keys(emailCache.districts).forEach((o) => {
             let email = emailCache.districts[o]
-            email['week'] = getAllWeeks()[parseInt(curWeek)-1][1]
+            email['week'] = getAllWeeks(true)[parseInt(curWeek)-1][1]
             let html = Mustache.render(template.toString(), email)
             let text = Mustache.render(templateText.toString(), email)
             sendMail({

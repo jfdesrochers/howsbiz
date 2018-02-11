@@ -1,6 +1,6 @@
 const m = require('mithril')
 const Property = require('../utils/Property.js')
-const MediumEditor = require('../../vendor/js/medium-editor.min.js')
+const Autogrow = require('textarea-autogrow')
 const $ = window.$ || require('jquery')
 
 const AddComment = {}
@@ -15,36 +15,18 @@ AddComment.oninit = function (vnode) {
     }
 }
 
-AddComment.oncreate = function () {
-    this.editor = new MediumEditor('.commenteditor', {
-        toolbar: {
-            buttons: ['bold', 'italic', 'underline', 'anchor', 'h2', 'h3', 'quote', 'unorderedlist', 'orderedlist'],
-        },
-        placeholder: {
-            text: 'Écrivez votre commentaire ici',
-            hideOnClick: true
-        },
-        anchor: {
-            customClassOption: null,
-            customClassOptionText: 'Button',
-            linkValidation: false,
-            placeholderText: 'Entrez une adresse web',
-            targetCheckbox: false,
-            targetCheckboxText: 'Open in new window'
-        },
-        autoLink: true,
-        elementsContainer: document.getElementById('addcomment'),
-        targetBlank: true
-    })
-}
-
 AddComment.view = function () {
     return m(".modal.fade#addcomment[tabindex='-1']", {
             'data-backdrop': 'static',
             oncreate: (vdom) => {
                 $(vdom.dom).modal('show')
                 $(vdom.dom).on('hidden.bs.modal', this.doClose)
-                $(vdom.dom).on('shown.bs.modal', () => $('#commentEdit').focus())
+                $(vdom.dom).on('shown.bs.modal', () => {
+                    const commentEditor = $('#commentEdit')
+                    const autogrow = new Autogrow(commentEditor.get(0))
+                    autogrow.autogrowFn() // To make it grow on the default value.
+                    commentEditor.focus()
+                })
             },
         }, [
 		m(".modal-dialog", [
@@ -55,12 +37,15 @@ AddComment.view = function () {
 				]),
 				m(".modal-body", [
                     'Écrivez votre commentaire ci-dessous :',
-                    m('div#commentEdit.commenteditor')
+                    m('textarea#commentEdit.commenteditor', {
+                        placeholder: 'Écrivez votre commentaire ici...',
+                        value: this.comment(),
+                        oninput: m.withAttr('value', this.comment)
+                    })
                 ]),
 				m(".modal-footer", [
 					m("button.btn.btn-default", {'data-dismiss': 'modal'}, 'Annuler'),
 					m("button.btn.btn-primary", {onclick: () => {
-                        this.comment(this.editor.getContent(0))
                         $('#addcomment').modal('hide')
                     }}, 'Sauvegarder')
 				])

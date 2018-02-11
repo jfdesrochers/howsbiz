@@ -1,7 +1,7 @@
 const m = require('mithril')
 const Property = require('../utils/Property.js')
-const {ModalWindow} = require('../utils/misc.js')
-const {Database, storeList, positionList} = require('../data.js')
+const {ModalWindow, toggleLoadIcon} = require('../utils/misc.js')
+const {Database, storeList, hbSections} = require('../data.js')
 const $ = window.$ || require('jquery')
 const _ = require('lodash')
 
@@ -25,9 +25,9 @@ const HBViewer = {}
 
 HBViewer.oninit = function (vnode) {
     this.HB = vnode.attrs.HBData.hbs[vnode.attrs.HBIndex]
-    this.users = vnode.attrs.HBData.users
     this.parent = vnode.attrs.parent
     this.user = vnode.attrs.parent.user
+    this.username = vnode.attrs.parent.username
 
     this.commentsLoading = Property(false)
     this.comments = []
@@ -36,14 +36,13 @@ HBViewer.oninit = function (vnode) {
 
     this.rebinddata = () => {
         this.HB = vnode.attrs.HBData.hbs[vnode.attrs.HBIndex]
-        this.users = vnode.attrs.HBData.users
     }
 
     this.parent.mainEvents.on('rebinddata', this.rebinddata)
 
     this.saveView = () => {
-        if (this.HB.views[this.user._id]) return
-        this.HB.views[this.user._id] = 1
+        if (this.HB.views[this.username]) return
+        this.HB.views[this.username] = 1
         Database.saveLikeViewComment(this.HB._id, 'views', this.HB.views)
         .then(() => {
             m.redraw()
@@ -55,10 +54,10 @@ HBViewer.oninit = function (vnode) {
         })
     }
     this.saveLike = () => {
-        if (this.HB.likes[this.user._id]) {
-            delete this.HB.likes[this.user._id]
+        if (this.HB.likes[this.username]) {
+            delete this.HB.likes[this.username]
         } else {
-            this.HB.likes[this.user._id] = 1
+            this.HB.likes[this.username] = 1
         }
         Database.saveLikeViewComment(this.HB._id, 'likes', this.HB.likes)
         .then(() => {
@@ -73,7 +72,7 @@ HBViewer.oninit = function (vnode) {
     this.saveComment = (comment) => {
         if (!comment) return
         this.commentsLoading(true)
-        Database.saveComment(comment, this.HB._id, this.user._id)
+        Database.saveComment(comment, this.HB._id, this.username)
         .then((doc) => {
             this.HB.comments[doc._id] = 1
             Database.saveLikeViewComment(this.HB._id, 'comments', this.HB.comments)
@@ -98,6 +97,7 @@ HBViewer.oninit = function (vnode) {
             this.commentsLoading(true)
             m.redraw()
         }
+        toggleLoadIcon(true)
         Database.getComments(this.HB._id, lastFetch)
         .then((commentlist) => {
             //this.comments.unshift.apply(this.comments, commentlist)
@@ -105,12 +105,14 @@ HBViewer.oninit = function (vnode) {
             this.commentsLastFetch = new Date()
             this.commentsLoading(false)
             m.redraw()
+            toggleLoadIcon(false)
         })
         .catch((err) => {
             console.log('Error [MongoDB] ' + err.errmsg)
             this.parent.dbError('Une erreur est survenue lors du chargement des commentaires. Merci de réessayer.')
             this.commentsLoading(false)
             m.redraw()
+            toggleLoadIcon(false)
         })
     }
 }
@@ -133,36 +135,19 @@ HBViewer.view = function() {
     return this.HB.status === 'published' ? m('div.hbviewer', [
         m('h1', storeList[this.HB.district][this.HB.store]),
         m('div.lead', this.parent.weeks[this.parent.curWeek() - 1][1]),
-        m('div.panel.panel-primary', [
-            m('div.panel-heading', m('h3.panel-title', 'Ventes')),
-            m('div.panel-body', m('div#salesView', this.HB.salesCom ? m.trust(this.HB.salesCom) : 'Aucun commentaire.')),
-            m('div.panel-footer', ['Rédigé par : ', this.HB.salesCont.map((id, i, a) => {
-                return [
-                    m('span', this.users[id].firstname + ' ' + this.users[id].lastname),
-                    i === a.length - 2 ? ' et ' : i < a.length - 2 ? ', ' : ''
-                ]
-            })])
-        ]),
-        m('div.panel.panel-success', [
-            m('div.panel-heading', m('h3.panel-title', 'Services')),
-            m('div.panel-body', m('div#servEdit.editor', this.HB.servCom ? m.trust(this.HB.servCom) : 'Aucun commentaire.')),
-            m('div.panel-footer', ['Rédigé par : ', this.HB.servCont.map((id, i, a) => {
-                return [
-                    m('span', this.users[id].firstname + ' ' + this.users[id].lastname),
-                    i === a.length - 2 ? ' et ' : i < a.length - 2 ? ', ' : ''
-                ]
-            })])
-        ]),
-        m('div.panel.panel-danger', [
-            m('div.panel-heading', m('h3.panel-title', 'Développement des affaires')),
-            m('div.panel-body', m('div#devlEdit.editor', this.HB.devCom ? m.trust(this.HB.devCom) : 'Aucun commentaire.')),
-            m('div.panel-footer', ['Rédigé par : ', this.HB.devCont.map((id, i, a) => {
-                return [
-                    m('span', this.users[id].firstname + ' ' + this.users[id].lastname),
-                    i === a.length - 2 ? ' et ' : i < a.length - 2 ? ', ' : ''
-                ]
-            })])
-        ]),
+        hbSections.map((sect) => {
+            return m(`div.panel.panel-${sect.color}`, {key: sect.name}, [
+                m('div.panel-heading', m('h3.panel-title', sect.title)),
+                m('div.list-group', sect.subsections.map((subsect) => {
+                    return m('div.list-group-item', {key: subsect.name}, [
+                        m('h4.list-group-item-heading', subsect.title),
+                        m('div.list-group-item-text', this.HB.data[subsect.name] && this.HB.data[subsect.name]['comment'] || 'Aucun Commentaire.'),
+                        m('div.list-group-item-text.muted', this.HB.data[subsect.name] && `Par: ${this.HB.data[subsect.name]['contributions'].join(', ')}` || '')
+                    ])
+                })),
+                m('div.panel-footer', m.trust(sect.helptext))
+            ])
+        }),
         m('div.panel.panel-default', [
             m('div.panel-heading', m('h3.panel-title', 'Photo')),
             m('div.panel-body.text-center', 
@@ -183,16 +168,16 @@ HBViewer.view = function() {
         m('div.commentsection', [
             m('h3', 'Commentaires'),
             this.commentsLoading() ? m('div.alert.alert-info.pulsing', 'Chargement en cours...') : this.comments.length ? m('ul.list-group', this.comments.map((o) => {
-                let cuser = this.users[o.userid]
+                let cuser = o.username.split(' ')
                 return m('li.list-group-item.fadein', {key: o._id}, [
                     m('h4.list-group-heading', m('div.media', [
-                        m('div.media-left', m('div.bubble-item', m('div.bubble-inner', cuser.firstname[0] + cuser.lastname[0]))),
+                        m('div.media-left', m('div.bubble-item', m('div.bubble-inner', cuser[0][0] + cuser[1][0]))),
                         m('div.media-body', [
                             m('div.clearfix', [
-                                m('div.media-heading.no-margin.pull-left', cuser.firstname + ' ' + cuser.lastname),
-                                m('div.muted.pull-right', new Date(o.postDate).toLocaleString('fr-CA'))
+                                m('div.media-heading.no-margin.pull-left', o.username)
+                                /*m('div.muted.pull-right', new Date(o.postDate).toLocaleString('fr-CA'))*/
                             ]),
-                            m('span.muted', positionList[cuser.position] + (cuser.store == '0' ? (', District' + ' ' + cuser.district) : (', Magasin ' + cuser.store + ' ' + storeList[cuser.district][cuser.store])))
+                            m('div.muted', new Date(o.postDate).toLocaleString('fr-CA'))
                         ])
                     ])),
                     m('p.list-group-item-text', m.trust(o.comment))

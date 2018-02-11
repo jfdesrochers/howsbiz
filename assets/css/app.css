@@ -1,5 +1,6 @@
 body {
     -webkit-user-select: none;
+    -ms-user-select: none;
     user-select: none;
     cursor: default;
     padding-top: 40px;
@@ -13,6 +14,7 @@ body {
     width: 100%;
     height: 40px;
     -webkit-user-select: none;
+    -ms-user-select: none;
     user-select: none;
     cursor: default;
     pointer-events: none;
@@ -20,7 +22,7 @@ body {
     background-color: #222222;
 }
 
-#titlebar .title-logo {
+#titlebar .title-logo, #titlebar .loading-icon, #titlebar .clock {
     width: 32px;
     height: 32px;
     position: absolute;
@@ -33,6 +35,57 @@ body {
     height: 100%;
     text-align: center;
     line-height: 40px;
+}
+
+#titlebar .loading-icon {
+    left: auto;
+    right: 4px;
+    font-size: 20px;
+    padding: 6px;
+    opacity: 0.1;
+    -webkit-transition: opacity 0.25s;
+    transition: opacity 0.25s;
+}
+
+#titlebar .clock {
+    left: auto;
+    width: auto;
+    right: 34px;
+    font-size: 14px;
+    line-height: 1.0;
+    padding: 2px;
+    font-variant: small-caps;
+    font-weight: bold;
+    text-align: right;
+    margin-right: 5px;
+}
+
+#titlebar .loading-icon.show {
+    opacity: 1;
+    -webkit-animation: spin 2s infinite linear;
+    animation: spin 2s infinite linear;
+}
+
+@-webkit-keyframes spin {
+    0% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
+    }
+    100% {
+        -webkit-transform: rotate(359deg);
+        transform: rotate(359deg);
+    }
+}
+
+@keyframes spin {
+    0% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
+    }
+    100% {
+        -webkit-transform: rotate(359deg);
+        transform: rotate(359deg);
+    }
 }
 
 ::-webkit-scrollbar {
@@ -50,6 +103,16 @@ body {
 ::selection {
     background-color: #4673a3;
     color: #FFFFFF;
+}
+
+.userlist {
+    height: 211px;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.userlist::-webkit-scrollbar-thumb {
+    background-color: #bfbfbf;
 }
 
 #hbcontents {
@@ -127,6 +190,47 @@ body {
     display: flex;
     flex-direction: column;
     background: #222222;
+    -webkit-transition: transform 0.5s ease;
+    transition: transform 0.5s ease;
+}
+
+#sidebarbutton {
+    position: absolute;
+    left: 250px;
+    top: calc(50vh - 25px);
+    font-size: 22px;
+    line-height: 1.0;
+    padding: 12px 3px;
+    display: none;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+#sidebarbutton::after {
+    content: "»";
+}
+
+#mainwindow.open #sidebarbutton::after {
+    content: "«";
+}
+
+.sidebarhotbox {
+    z-index: 500;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    -webkit-transition: opacity 0.5s, visibility 0.5s ease;
+    transition: opacity 0.5s, visibility 0.5s ease;
+    visibility: hidden;
+    opacity: 0;
+    background-color: #000000;
+}
+
+#mainwindow.open .sidebarhotbox {
+    opacity: 0.6;
+    visibility: visible;
 }
 
 .contentwindow {
@@ -142,6 +246,28 @@ body {
     -webkit-user-select: initial;
     user-select: initial;
     cursor: initial;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media(max-width: 767px) {
+    .sidebar {
+        -webkit-transform: translateX(-250px);
+        transform: translateX(-250px);
+    }
+
+    #mainwindow.open .sidebar {
+        -webkit-transform: initial;
+        transform: initial;
+    }
+
+    #sidebarbutton {
+        display: block;
+    }
+
+    .contentwindow {
+        left: 0;
+        width: 100%;
+    }
 }
 
 .contentwindow.editor {
@@ -188,6 +314,7 @@ body {
 
 .sidebar .list-wrapper {
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .sidebar .list-group {
@@ -230,8 +357,24 @@ body {
     color: #222222;
 }
 
-.panel-body.focused {
-    background-color: #EEEEEE;
+.editor {
+    border: none;
+    resize: none;
+    box-sizing: content-box;
+    width: 100%;
+    background-color: inherit;
+}
+
+.editor:focus {
+    outline: 0;
+}
+
+.hbeditor .list-group-item, .hbviewer .list-group-item {
+    background-color: #eeeeee;
+}
+
+.hbeditor .list-group-item.focused {
+    background-color: #ffffff;
 }
 
 .hbeditor .panel-primary .panel-footer, .hbviewer .panel-primary .panel-footer {
@@ -257,8 +400,20 @@ body {
     border-color: #989898;
 }
 
-.editor:focus {
-    outline: 0;
+.hbeditor .panel-primary .list-group-item {
+    border-color: #375a7f;
+}
+
+.hbeditor .panel-success .list-group-item {
+    border-color: #00bc8c;
+}
+
+.hbeditor .panel-danger .list-group-item {
+    border-color: #e74c3c;
+}
+
+.hbeditor .panel-default .list-group-item {
+    border-color: #464545;
 }
 
 .btn-file {
@@ -315,6 +470,13 @@ body {
     color: inherit;
 }
 
+.hbviewer .list-group-item-text {
+    white-space: pre-wrap;
+    -webkit-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
 .commenteditor {
     background-color: #EEEEEE;
     color: #222222;
@@ -322,6 +484,8 @@ body {
     border-radius: 5px;
     padding: 5px;
     cursor: text;
+    resize: none;
+    width: 100%;
 }
 
 .commentsection .list-group-item {
@@ -337,6 +501,10 @@ body {
 
 .no-margin {
     margin: 0;
+}
+
+.ml5 {
+    margin-left: 5px;
 }
 
 .mr5 {

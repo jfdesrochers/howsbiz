@@ -1,9 +1,10 @@
 const m = require('mithril')
-const MediumEditor = require('../../vendor/js/medium-editor.min.js')
 const Property = require('../utils/Property.js')
-const {Database} = require('../data.js')
+const {toggleLoadIcon} = require('../utils/misc')
+const {Database, hbSections} = require('../data.js')
 const $ = window.$ || require('jquery')
 const _ = require('lodash')
+const Autogrow = require('textarea-autogrow')
 
 const HBEditor = {}
 
@@ -15,12 +16,7 @@ HBEditor.oninit = function (vnode) {
             district: this.parent.user.district,
             store: this.parent.user.store,
             week: this.parent.curWeek(),
-            salesCom: '',
-            salesCont: [],
-            servCom: '',
-            servCont: [],
-            devCom: '',
-            devCont: [],
+            data: {},
             picUrl: '',
             views: {},
             likes: {},
@@ -30,11 +26,7 @@ HBEditor.oninit = function (vnode) {
     }
     this.HB = vnode.attrs.HB || this.newHB()
     this.HBData = vnode.attrs.HBData
-    this.contributions = {
-        'salesCom': false,
-        'servCom': false,
-        'devCom': false
-    }
+    this.contributions = {}
     this.imgError = Property('')
     this.imgSrc = Property(this.HB.picUrl)
     this.imgLoading = Property(false, () => {m.redraw()})
@@ -42,18 +34,9 @@ HBEditor.oninit = function (vnode) {
     this.saveInterval = null
     this.doSave = () => {
         if (!this.parent.editorDirty()) return
+        toggleLoadIcon(true)
         return new Promise((resolve, reject) => {
             this.saving(true)
-            let userid = this.parent.user._id
-            if (this.contributions.salesCom && _.indexOf(this.HB.salesCont, userid) === -1) {
-                this.HB.salesCont.push(userid)
-            }
-            if (this.contributions.servCom && _.indexOf(this.HB.servCont, userid) === -1) {
-                this.HB.servCont.push(userid)
-            }
-            if (this.contributions.devCom && _.indexOf(this.HB.devCont, userid) === -1) {
-                this.HB.devCont.push(userid)
-            }
             Database.saveHB(this.HB)
             .then((newHB) => {
                 _.assign(this.HB, newHB)
@@ -61,12 +44,14 @@ HBEditor.oninit = function (vnode) {
                 this.parent.myHB(this.HB._id)
                 this.parent.editorDirty(false)
                 this.saving(false)
+                toggleLoadIcon(false)
                 resolve()
             })
             .catch((err) => {
                 console.log('Error [MongoDB] ' + err.errmsg)
                 this.parent.dbError('Une erreur est survenue lors de la sauvegarde. Merci de réessayer.')
                 this.saving(false)
+                toggleLoadIcon(false)
                 reject(err)
             })
         })
@@ -123,50 +108,17 @@ HBEditor.oninit = function (vnode) {
             reader.readAsDataURL(src);
         }
     }
+
+    this.onEditorInput = (name) => (e) => {
+        let value = e.target.value
+        this.HB.data[name] ? this.HB.data[name]['comment'] = value : this.HB.data[name] = {comment: value, contributions: []}
+        _.indexOf(this.HB.data[name]['contributions'], this.parent.username) === -1 && this.HB.data[name]['contributions'].push(this.parent.username)
+        this.parent.editorDirty(true)
+    }
 }
 
 HBEditor.oncreate = function () {
     $('.contentwindow').scrollTop(0)
-    this.editor = new MediumEditor('.editor', {
-        toolbar: {
-            buttons: ['bold', 'italic', 'underline', 'anchor', 'h2', 'h3', 'quote', 'unorderedlist', 'orderedlist'],
-        },
-        placeholder: {
-            text: 'Écrivez votre commentaire ici',
-            hideOnClick: true
-        },
-        anchor: {
-            customClassOption: null,
-            customClassOptionText: 'Button',
-            linkValidation: false,
-            placeholderText: 'Entrez une adresse web',
-            targetCheckbox: false,
-            targetCheckboxText: 'Open in new window'
-        },
-        autoLink: true,
-        targetBlank: true
-    })
-    this.editor.setContent(this.HB.salesCom, 0)
-    this.editor.setContent(this.HB.servCom, 1)
-    this.editor.setContent(this.HB.devCom, 2)
-    this.editor.subscribe('editableInput', (event, editable) => {
-        this.parent.editorDirty(true)
-        let idx = editable.getAttribute('data-editindex')
-        switch(idx) {
-            case '0':
-                this.HB.salesCom = this.editor.getContent(0)
-                this.contributions.salesCom = true
-                break
-            case '1':
-                this.HB.servCom = this.editor.getContent(1)
-                this.contributions.servCom = true
-                break
-            case '2':
-                this.HB.devCom = this.editor.getContent(2)
-                this.contributions.devCom = true
-                break
-        }
-    });
     this.saveInterval = setInterval(this.doSave, 15000)
 }
 
@@ -181,51 +133,34 @@ HBEditor.view = function () {
     return m('div.hbeditor', [
         m('h1', 'Mon How\'s Biz'),
         m('div.lead', this.parent.weeks[this.parent.curWeek() - 1][1]),
-        m('div.panel.panel-primary', [
-            m('div.panel-heading', m('h3.panel-title', 'Ventes')),
-            m('div.panel-body', m('div#salesEdit.editor', {
-                'data-editindex': 0, 
-                onfocus: (e) => {
-                    e.target.parentElement.classList.add('focused')
-                    e.redraw = false
-                },
-                onblur: (e) => {
-                    e.target.parentElement.classList.remove('focused')
-                    e.redraw = false
-                },
-            })),
-            m('div.panel-footer', 'Conversion et DPO, coaching et Vente Inspirée, marchandisage et opérations, formation et reconnaissance (Apple, concours, etc.)')
-        ]),
-        m('div.panel.panel-success', [
-            m('div.panel-heading', m('h3.panel-title', 'Services')),
-            m('div.panel-body', m('div#servEdit.editor', { 
-                'data-editindex': 1,
-                onfocus: (e) => {
-                    e.target.parentElement.classList.add('focused')
-                    e.redraw = false
-                },
-                onblur: (e) => {
-                    e.target.parentElement.classList.remove('focused')
-                    e.redraw = false
-                },
-            })),
-            m('div.panel-footer', 'Initiatives au Techno-Centre et aux Copies (services à domicile, liquid armor, formation et coaching, marchandisage, appels clients)')
-        ]),
-        m('div.panel.panel-danger', [
-            m('div.panel-heading', m('h3.panel-title', 'Développement des affaires')),
-            m('div.panel-body', m('div#devlEdit.editor', { 
-                'data-editindex': 2,
-                onfocus: (e) => {
-                    e.target.parentElement.classList.add('focused')
-                    e.redraw = false
-                },
-                onblur: (e) => {
-                    e.target.parentElement.classList.remove('focused')
-                    e.redraw = false
-                },
-            })),
-            m('div.panel-footer', 'Réseautage (BDM, PRE, etc.), vos grosses ventes et vos bons coups. Si vous avez créé un lien avec un client d\'affaires, mentionnez-le ici!')
-        ]),
+        hbSections.map((sect) => {
+            return m(`div.panel.panel-${sect.color}`, {key: sect.name}, [
+                m('div.panel-heading', m('h3.panel-title', sect.title)),
+                m('div.list-group', sect.subsections.map((subsect) => {
+                    return m('div.list-group-item', {key: subsect.name}, [
+                        m('h4.list-group-item-heading', subsect.title),
+                        m('textarea.list-group-item-text.editor', {
+                            oncreate: (vnode) => {
+                                vnode.state.autogrow = new Autogrow(vnode.dom)
+                                vnode.state.autogrow.autogrowFn() // To make it grow on the default value.
+                            },
+                            onfocus: (e) => {
+                                e.target.parentElement.classList.add("focused"),
+                                e.redraw = false
+                            },
+                            onblur: (e) => {
+                                e.target.parentElement.classList.remove("focused"),
+                                e.redraw = false
+                            },
+                            placeholder: 'Écrivez votre commentaire ici...',
+                            value: this.HB.data[subsect.name] && this.HB.data[subsect.name]['comment'] || '',
+                            oninput: this.onEditorInput(subsect.name)
+                        })
+                    ])
+                })),
+                m('div.panel-footer', m.trust(sect.helptext))
+            ])
+        }),
         m('div.panel.panel-default', [
             m('div.panel-heading', m('h3.panel-title', 'Photo')),
             m('div.panel-body.text-center', 
@@ -255,11 +190,11 @@ HBEditor.view = function () {
                 this.parent.hasEditor(false)
                 this.parent.curView(oid)
                 m.redraw()
-                m.request({
+                /*m.request({
                     method: 'post',
                     url: '/sendemails',
                     data: this.HB
-                })
+                })*/
             })
         }}, this.saving() ? 'Sauvegarde en cours...' : 'Publier mon How\'s Biz!'),
         m('button.btn.btn-primary.pull-left' + (!this.parent.editorDirty() || this.saving() ? '.disabled' : ''), {onclick: this.doSave}, this.parent.editorDirty() ? (this.saving() ? 'Sauvegarde en cours...' : 'Sauvegarder...') : 'Sauvegardé')

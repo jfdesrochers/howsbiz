@@ -1,6 +1,7 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 const session = require('express-session')
+const MemoryStore = require('memorystore')(session)
 const favicon = require('serve-favicon')
 const app = express()
 const path = require('path')
@@ -39,10 +40,16 @@ passport.deserializeUser(function(user, done) {
   done(null, user)
 });
 
-function authenticated () {  
+function authenticated (reqAdmin) {  
     return function (req, res, next) {
         if (req.isAuthenticated()) {
-            return next()
+            if (reqAdmin) {
+                if (req.session.passport.user.role === '80') {
+                    return next()
+                }
+            } else {
+                return next()
+            }
         }
         res.sendStatus(401)
     }
@@ -51,6 +58,9 @@ function authenticated () {
 app.use('/assets', express.static('assets'))
 app.use(favicon(path.join(__dirname, 'assets', 'img', 'favicon.ico')))
 app.use(session({
+    store: new MemoryStore({
+        checkPeriod: 86400000
+    }),
     secret: env.SESSIONSECRET,
     resave: false,
     saveUninitialized: false
@@ -67,8 +77,18 @@ app.post('/login', passport.authenticate('local'), (req, res) => {
     res.json(req.user)
 })
 
-app.post('/createuser', (req, res, next) => {
+app.post('/createuser', authenticated(true), (req, res, next) => {
     Database.createUser(req.body)
+    .then((result) => {
+        res.json(result)
+    })
+    .catch((e) => {
+        return next(e)
+    })
+})
+
+app.get('/listusers', authenticated(true), (req, res, next) => {
+    Database.listUsers()
     .then((result) => {
         res.json(result)
     })
@@ -101,4 +121,8 @@ app.post('/sendemails', authenticated(), (req, res, next) => {
     }
 })
 
-app.listen(8080)
+const port = process.env.PORT || 8080
+
+app.listen(port, function () {
+    console.log(`Server started at port ${port}...`)
+})

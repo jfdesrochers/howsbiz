@@ -133,6 +133,27 @@ const Database = {
             })
         }) 
     },
+    listUsers: function() {
+        return new Promise(function (resolve, reject) {
+            MongoClient.connect(env.DBURL)
+            .then(function(db) {
+                let users = db.collection('users')
+                users.find().project({'password': 0}).toArray()
+                .then(function (userlist) {
+                    db.close()
+                    resolve(userlist)
+                })
+                .catch(function (err) {
+                    db.close()
+                    reject(makeError('e_mongoerr', err))
+                })
+
+            })
+            .catch(function (err) {
+                reject(makeError('e_mongoerr', err))
+            })
+        }) 
+    },
     getHBs: function (hbdata) {
         return new Promise(function (resolve, reject) {
             MongoClient.connect(env.DBURL)
@@ -217,10 +238,9 @@ const Database = {
             .then(function(db) {
                 let cmts = db.collection('comments')
                 commentdata.hbid = ObjectID(commentdata.hbid)
-                commentdata.userid = ObjectID(commentdata.userid)
                 let doc = {
                     hbid: commentdata.hbid,
-                    userid: commentdata.userid,
+                    username: commentdata.username,
                     comment: commentdata.comment,
                     postDate: new Date()
                 }
@@ -488,4 +508,107 @@ const Database = {
     },
 }
 
+function initDB() {
+    let db = null
+    MongoClient.connect(env.DBURL).then(function(dbase) {
+        db = dbase
+        let users = db.collection('users')
+        return users.count()
+    }).then((count) => {
+        if (count === 0) {
+            return Database.createUser({
+                firstname: 'Account',
+                lastname: 'Master',
+                username: 'AccountMaster',
+                password: 'Master123',
+                email: 'AccountMaster@howsbiz.jfd',
+                district: '0',
+                store: '0',
+                position: 'gm',
+                role: '80',
+                serviceAccount: true,
+                lastModified: new Date()
+            })
+        } else {
+            return false
+        }
+    }).then((result) => {
+        db.close()
+        if (result) {
+            console.log('Default user account AccountMaster created.')
+        }
+    }).catch((err) => {
+        if (db) db.close()
+        console.error('Error while creating the default user account', err)
+    })
+}
+
 module.exports.Database = Database
+
+const hbSections = [
+    {
+        name: 'salesSection',
+        title: 'Ventes',
+        color: 'primary',
+        subsections: [
+            {
+                title: 'Vos initiatives de ventes',
+                name: 'salesInit'
+            },
+            {
+                title: 'Marchandisage et opérations',
+                name: 'salesOps'
+            },
+            {
+                title: 'Les bons coups de la compétition',
+                name: 'salesComp'
+            }
+        ],
+        helptext: '<strong>Initiatives de ventes</strong>: Parlez ici des idées que vous avez mises en place pour améliorer vos ventes, votre conversion, etc. Parlez de vos <em>shows</em> sur le plancher, de votre coaching, des concours que vous avez mis en place, etc...<br>' +
+                  '<strong>Marchandisage et opérations</strong>: Quel est l\'état de votre magasin? Parlez ici de vos <em>Out of stock</em>, de votre mise en marché des circulaires et de votre progression sur les opérations du moment (<em>reflows</em>, planogrammes, etc.)<br>' +
+                  '<strong>La compétition</strong>: Avez-vous visité votre compétition (Best Buy, Buropro, etc.)? Parlez ici des bonnes idées et des promotions intéressantes de votre compétition.'
+    },
+    {
+        name: 'servSection',
+        title: 'Services',
+        color: 'success',
+        subsections: [
+            {
+                title: 'Services d\'impression et de marketing',
+                name: 'servCopy'
+            },
+            {
+                title: 'Services de soutien technique',
+                name: 'servTech'
+            }
+        ],
+        helptext: '<strong>Services d\'impression et de marketing</strong>: Parlez ici des initiatives par rapport au centre de copies (promotions et playbook, appels clients, formation et coaching, nouveaux services, grosses ventes, etc...).<br>' +
+                  '<strong>Services de soutien technique</strong>: Parlez ici des initiatives par rapport au techno-centre (services à domicile, appels clients, formation et coaching, Liquid Armor, installations, etc...).'
+    },
+    {
+        name: 'devSection',
+        title: 'Développement des affaires',
+        color: 'danger',
+        subsections: [
+            {
+                title: 'Programmes scolaires',
+                name: 'devSchool'
+            },
+            {
+                title: 'Votre histoire de la semaine',
+                name: 'devStory'
+            },
+            {
+                title: 'Autres commentaires',
+                name: 'devCom'
+            }
+        ],
+        helptext: '<strong>Programmes scolaires</strong>: Parlez ici des actions que vous avez prises pour mettre de l\'avant les différents programmes scolaires (comme AVAN), les relations que vous avez bâti avec les écoles, la mise en place d\'événements comme les journées des profs, etc.<br>' +
+                  '<strong>Histoire de la semaine</strong>: Racontez-nous votre histoire de développement des affaires pour cette semaine.<br>' +
+                  '<strong>Autres commentaires</strong>: Écrivez ici toutes les autres démarches, initiatives, etc. que vous avez prises en rapport au développement des affaires.'
+    }
+]
+
+module.exports.hbSections = hbSections
+
+initDB()

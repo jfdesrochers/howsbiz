@@ -31,3 +31,10 @@ const ModalWindow = function(component, attrs) {
 }
 
 module.exports.ModalWindow = ModalWindow
+
+const toggleLoadIcon = function(show) {
+    let loadicon = document.getElementById('loadicon')
+    show ? loadicon.classList.add('show') : loadicon.classList.remove('show')
+}
+
+module.exports.toggleLoadIcon = toggleLoadIcon

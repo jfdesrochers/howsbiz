@@ -62,9 +62,11 @@ ValidatingInput.oninit = function (vnode) {
 
 ValidatingInput.view = function (vnode) {
     const options = vnode.attrs.options
+    let attrs = options.disableMobileFeatures ? {type: options.type, onchange: this.fieldChange, value: this.fieldValue(), autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off', spellcheck: 'false'} : 
+    {type: options.type, onchange: this.fieldChange, value: this.fieldValue()}
     return m('div.form-group' + (this.hasValidation ? '.has-feedback' + (this.isValid ? '.has-success' : '.has-error') : ''), [
                 m('label.control-label', {for: options.name}, options.label),
-                m('input.form-control#' + options.name, {type: options.type, onchange: this.fieldChange, value: this.fieldValue()}),
+                m('input.form-control#' + options.name, attrs),
                 this.hasValidation ? m('span.glyphicon.form-control-feedback' + (this.isValid ? '.glyphicon-ok' : '.glyphicon-remove')) : '',
                 this.validMessage !== '' ? m('span.help-block', this.validMessage) : ''
             ])

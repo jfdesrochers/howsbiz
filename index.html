@@ -2,11 +2,15 @@
 <html>
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-title" content="How's Biz">
         <title>How's Biz par Jean-François Desrochers</title>
+        <link rel="apple-touch-icon" href="./assets/img/logojfdtr.png">
+        <link rel="icon" type="image/png" href="./assets/img/logojfdtr.png">
         <link href="./assets/vendor/css/bootstrap.min.css" rel="stylesheet">
-        <link href="./assets/vendor/css/medium-editor.min.css" rel="stylesheet">
-        <link href="./assets/vendor/css/themes/beagle.min.css" rel="stylesheet">
         <link href="./assets/css/app.css" rel="stylesheet">
     </head>
     <body>
@@ -14,6 +18,8 @@
             <div style="width: 100%; height: 100%; position: absolute;">
                 <img class="title-logo" src="./assets/img/logojfdtr.png">
                 <div class="title">How's Biz par Jean-François Desrochers</div>
+                <span id="clock" class="clock hidden-xs"></span>
+                <span id="loadicon" class="loading-icon glyphicon glyphicon-cog" title="Indicateur de chargement"></span>
             </div>
         </div>
         <div id="modalcontainer"></div>

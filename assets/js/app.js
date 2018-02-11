@@ -2,6 +2,7 @@ const m = require('mithril')
 const AppLoader = require('./ui/loader.js')
 const {AccountsUI} = require('./ui/accounts.js')
 const MainWindow = require('./ui/mainwindow.js')
+const {getClock} = require('./utils/dateutils')
 window.jQuery = window.$ = require('jquery')
 require('bootstrap')
 
@@ -40,6 +41,13 @@ document.addEventListener('drop', function (event) {
     event.preventDefault();
     return false;
 }, false);
+
+// Start the clock
+let clockelem = document.getElementById('clock')
+function advanceClock() {
+    clockelem.innerHTML = getClock()
+}
+setInterval(advanceClock, 1000)
 
 // Mount the application
 m.mount(document.getElementById("hbcontents"), HowsApp)
