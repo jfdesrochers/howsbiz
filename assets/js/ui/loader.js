@@ -1,6 +1,6 @@
 const m = require('mithril')
 const $ = window.$ || require('jquery')
-
+const {toggleLoadIcon} = require('../utils/misc')
 const AppLoader = {}
 
 AppLoader.status = {
@@ -29,6 +29,11 @@ AppLoader.oncreate = function (vnode) {
             vnode.attrs.onready()
         }
     })
+    toggleLoadIcon(true)
+}
+
+AppLoader.onremove = function () {
+    toggleLoadIcon(false)
 }
 
 AppLoader.view = function () {

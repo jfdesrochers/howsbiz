@@ -40,8 +40,8 @@ const createUsers = function() {
     let userPool = stores.reduce((users, str) => {
         let storeUsers = positions.map((pos) => {
             const hash = crypto.createHash('sha256')
-            hash.update(`Staples${str}`)
             let astr = str.length > 2 ? str : '0' + str
+            hash.update(`Staples${astr}`)
             return {
                 firstname: `${pos.firstname}`,
                 lastname: `Magasin ${str}`,

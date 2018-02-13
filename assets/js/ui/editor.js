@@ -111,9 +111,11 @@ HBEditor.oninit = function (vnode) {
 
     this.onEditorInput = (name) => (e) => {
         let value = e.target.value
-        this.HB.data[name] ? this.HB.data[name]['comment'] = value : this.HB.data[name] = {comment: value, contributions: []}
-        _.indexOf(this.HB.data[name]['contributions'], this.parent.username) === -1 && this.HB.data[name]['contributions'].push(this.parent.username)
-        this.parent.editorDirty(true)
+        if (!this.HB.data[name] || this.HB.data[name]['comment'] !== value) {
+            this.HB.data[name] ? this.HB.data[name]['comment'] = value : this.HB.data[name] = {comment: value, contributions: []}
+            _.indexOf(this.HB.data[name]['contributions'], this.parent.username) === -1 && this.HB.data[name]['contributions'].push(this.parent.username)
+            this.parent.editorDirty(true)
+        }
     }
 }
 
@@ -141,6 +143,7 @@ HBEditor.view = function () {
                         m('h4.list-group-item-heading', subsect.title),
                         m('textarea.list-group-item-text.editor', {
                             oncreate: (vnode) => {
+                                vnode.dom.value = this.HB.data[subsect.name] && this.HB.data[subsect.name]['comment'] || ''
                                 vnode.state.autogrow = new Autogrow(vnode.dom)
                                 vnode.state.autogrow.autogrowFn() // To make it grow on the default value.
                             },
@@ -153,7 +156,6 @@ HBEditor.view = function () {
                                 e.redraw = false
                             },
                             placeholder: 'Écrivez votre commentaire ici...',
-                            value: this.HB.data[subsect.name] && this.HB.data[subsect.name]['comment'] || '',
                             oninput: this.onEditorInput(subsect.name)
                         })
                     ])
