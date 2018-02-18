@@ -373,6 +373,10 @@ body {
     background-color: #eeeeee;
 }
 
+.hbeditor .list-group-item-heading, .hbviewer .list-group-item-heading {
+    font-weight: bold;
+}
+
 .hbeditor .list-group-item.focused {
     background-color: #ffffff;
 }
@@ -400,19 +404,19 @@ body {
     border-color: #989898;
 }
 
-.hbeditor .panel-primary .list-group-item {
+.hbeditor .panel-primary .list-group-item, .hbviewer .panel-primary .list-group-item {
     border-color: #375a7f;
 }
 
-.hbeditor .panel-success .list-group-item {
+.hbeditor .panel-success .list-group-item, .hbviewer .panel-primary .list-group-item {
     border-color: #00bc8c;
 }
 
-.hbeditor .panel-danger .list-group-item {
+.hbeditor .panel-danger .list-group-item, .hbviewer .panel-primary .list-group-item {
     border-color: #e74c3c;
 }
 
-.hbeditor .panel-default .list-group-item {
+.hbeditor .panel-default .list-group-item, .hbviewer .panel-primary .list-group-item {
     border-color: #464545;
 }
 

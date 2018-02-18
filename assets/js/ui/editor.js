@@ -192,11 +192,11 @@ HBEditor.view = function () {
                 this.parent.hasEditor(false)
                 this.parent.curView(oid)
                 m.redraw()
-                /*m.request({
+                m.request({
                     method: 'post',
                     url: '/sendemails',
                     data: this.HB
-                })*/
+                })
             })
         }}, this.saving() ? 'Sauvegarde en cours...' : 'Publier mon How\'s Biz!'),
         m('button.btn.btn-primary.pull-left' + (!this.parent.editorDirty() || this.saving() ? '.disabled' : ''), {onclick: this.doSave}, this.parent.editorDirty() ? (this.saving() ? 'Sauvegarde en cours...' : 'Sauvegarder...') : 'Sauvegardé')

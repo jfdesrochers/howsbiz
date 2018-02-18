@@ -611,4 +611,12 @@ const hbSections = [
 
 module.exports.hbSections = hbSections
 
+const hbColorMap = {
+    success: '#00bc8c',
+    primary: '#375a7f',
+    danger: '#e74c3c'
+}
+
+module.exports.hbColorMap = hbColorMap
+
 initDB()
