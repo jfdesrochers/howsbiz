@@ -3,13 +3,16 @@ const fs = require('fs')
 const sendMail = require('./sendmail.js')
 const env = require('../env.json')
 const path = require('path')
-const {Database, hbSections, hbColorMap} = require('./data.js')
+const {Database, hbSections, hbColorMap, storeList} = require('./data.js')
 
-const mergeSections = function(hb) {
+const hbmaster = fs.readFileSync(path.join(__dirname, 'templates', 'howsbiz.mst'), 'utf8').toString()
+const allhbs = fs.readFileSync(path.join(__dirname, 'templates', 'allhbs.mst'), 'utf8').toString()
+
+const mergeSections = function(hb, keepColorNames) {
     return hbSections.map((sect) => {
         return {
             title: sect.title,
-            color: hbColorMap[sect.color],
+            color: keepColorNames ? sect.color : hbColorMap[sect.color],
             subsections: sect.subsections.map((subsect) => {
                 return {
                     title: subsect.title,
@@ -22,28 +25,42 @@ const mergeSections = function(hb) {
 }
 
 const mailHowsBiz = function(hb) {
-    fs.readFile(path.join(__dirname, 'templates', 'howsbiz.mst'), 'utf8', (err, template) => {
-        if (err) {
-            console.log(err)
-        } else {
-            let hbtmpl = {
-                store: hb.store,
-                week: hb.week,
-                picUrl: hb.picUrl,
-                data: mergeSections(hb)
-            }
-            let html = Mustache.render(template.toString(), hbtmpl)
-            Database.emailGetEmails(hb.store).then((emails) => {
-                sendMail({
-                    from: '"How\'s Biz par J-F Desrochers" <' + env.GMAILADDR + '>',
-                    to: 'martine.dessureault@staples.ca,' + emails.map((o) => o['email']).join(','),
-                    subject: 'How\'s Biz magasin ' + hb.store + ' semaine ' + hb.week, 
-                    text: '', 
-                    html: html
-                })
-            })
-        }
+    let hbtmpl = {
+        store: hb.store,
+        week: hb.week,
+        picUrl: hb.picUrl,
+        data: mergeSections(hb)
+    }
+    let html = Mustache.render(hbmaster, hbtmpl)
+    Database.emailGetEmails(hb.store).then((emails) => {
+        sendMail({
+            from: '"How\'s Biz par J-F Desrochers" <' + env.GMAILADDR + '>',
+            to: 'martine.dessureault@staples.ca,' + emails.map((o) => o['email']).join(','),
+            subject: 'How\'s Biz magasin ' + hb.store + ' semaine ' + hb.week, 
+            text: '', 
+            html: html
+        })
     })
 }
 
-module.exports = mailHowsBiz
+module.exports.mailHowsBiz = mailHowsBiz
+
+const getAllHBs = function(hbs) {
+    hbs.sort(function (a,b) {
+        ia = parseInt(a['store']);
+        ib = parseInt(b['store']);
+        return (ia < ib) ? -1 : (ia > ib) ? 1 : 0;
+    })
+    hbs = hbs.map((hb) => {
+        return {
+            store: hb.store,
+            storename: storeList[hb.district][hb.store],
+            week: hb.week,
+            picUrl: hb.picUrl,
+            data: mergeSections(hb, true)
+        }
+    })
+    return Mustache.render(allhbs, {hbs: hbs})
+}
+
+module.exports.getAllHBs = getAllHBs

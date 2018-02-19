@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>How's Biz par Jean-François Desrochers</title>
+        <link rel="apple-touch-icon" href="../assets/img/logojfdtr.png">
+        <link rel="icon" type="image/png" href="../assets/img/logojfdtr.png">
+        <link href="../assets/vendor/css/bootstrap.min.css" rel="stylesheet">
+        <link href="../assets/css/app.css" rel="stylesheet">
+    </head>
+    <body>
+        <div id="titlebar" class="with-actions hidden-print">
+            <div style="width: 100%; height: 100%; position: absolute;">
+                <img class="title-logo" src="../assets/img/logojfdtr.png">
+                <button onclick="window.print()" class="btn btn-primary btn-sm pull-right mr5">Imprimer</button>
+                <a href="https://howsbiz.jfdft.com" class="btn btn-default btn-sm pull-right mr5">Aller à howsbiz.jfdft.com</a>
+            </div>
+        </div>
+        <div id="hbcontents" class="viewer">
+            <div class="apploader uicontainer" style="display: block;">
+                <div class="row">
+                    <div class="col-xs-6 col-xs-offset-3">
+                        <img src="../assets/img/logo.svg" class="mainlogo">
+                        <p id="loadingmsg" class="lead pulsing">
+                            Chargement en cours...
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            var urlKey = document.location.href.substr(document.location.href.lastIndexOf('/') + 1);
+            var oReq = new XMLHttpRequest();
+
+            oReq.addEventListener("load", transferComplete);
+            oReq.addEventListener("error", transferError);
+            oReq.addEventListener("abort", transferError);
+
+            oReq.open("GET", "../contents/" + urlKey);
+            oReq.send();
+
+            function transferComplete(evt) {
+                var cnt = document.getElementById("hbcontents")
+                cnt.innerHTML = evt.target.responseText
+            }
+
+            function transferError(evt) {
+                console.error('Error', evt);
+                var msg = document.getElementById("loadingmsg");
+                msg.classList.remove("pulsing");
+                msg.classList.add("text-danger");
+                msg.innerText = "Erreur lors du chargement des données.";
+            }
+        </script>
+    </body>
+</html>

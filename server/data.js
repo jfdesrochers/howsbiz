@@ -161,6 +161,7 @@ const Database = {
                 let hbs = db.collection('howsbiz')
                 let query = {'district': hbdata.district, 'week': hbdata.week}
                 if (hbdata.store) query['store'] = hbdata.store
+                if (hbdata.status) query['status'] = hbdata.status
                 if (hbdata.lastupdate) {
                     hbdata.lastupdate = new Date(hbdata.lastupdate)
                     query['lastModified'] = {$gte: hbdata.lastupdate}
@@ -544,6 +545,44 @@ function initDB() {
 }
 
 module.exports.Database = Database
+
+const districtList = {
+    '19': 'District 19'
+}
+
+const storeList = {
+    '19': {
+        '0': 'Région',
+        '40': 'Sherbrooke',
+        '75': 'Greenfield Park',
+        '88': 'St-Jean',
+        '105': 'St-Hyacinthe',
+        '123': 'Longueuil',
+        '128': 'St-Bruno',
+        '139': 'Drummondville',
+        '164': 'Granby',
+        '209': 'Châteauguay',
+        '220': 'Sorel',
+        '245': 'Boucherville',
+        '292': 'Magog',
+        '306': 'Montréal',
+        '316': 'Brossard Dix30',
+        '325': 'Candiac',
+        '333': 'Rouyn-Noranda',
+        '427': 'Beloeil'
+    }
+}
+
+const positionList = {
+    'gm': 'Direction - Général',
+    'mgr': 'Direction',
+    'sup': 'Supervision',
+    'dm': 'Direction - Régional'
+}
+
+module.exports.districtList = districtList
+module.exports.storeList = storeList
+module.exports.positionList = positionList
 
 const hbSections = [
     {

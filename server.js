@@ -8,7 +8,7 @@ const path = require('path')
 const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
 const {Database} = require('./server/data.js')
-const mailHowsBiz = require('./server/mailhowsbiz.js')
+const {mailHowsBiz, getAllHBs} = require('./server/mailhowsbiz.js')
 const env = require('./env.json')
 
 passport.use(new LocalStrategy(
@@ -117,6 +117,28 @@ app.post('/sendemails', authenticated(), (req, res, next) => {
         res.json({status: 'success'})
     } catch(e) {
         res.json({status: 'error', error: e})
+        return next(e)
+    }
+})
+
+app.get('/view/:key', (req, res, next) => {
+    if (!req.params.key) {
+        return res.sendStatus(404)
+    }
+    res.sendFile(path.join(__dirname, 'indexview.html'))
+})
+
+app.get('/contents/:key', (req, res, next) => {
+    if (!req.params.key) {
+        return res.sendStatus(404)
+    }
+    try {
+        let options = JSON.parse(new Buffer(req.params.key, 'base64').toString())
+        options['status'] = 'published'
+        Database.getHBs(options).then((hbs) => {
+            res.send(getAllHBs(hbs))
+        })
+    } catch(e) {
         return next(e)
     }
 })

@@ -6,6 +6,12 @@ body {
     padding-top: 40px;
 }
 
+@media print {
+    body {
+        padding-top: 0;
+    }
+}
+
 #titlebar {
     position: fixed;
     top: 0;
@@ -20,6 +26,14 @@ body {
     pointer-events: none;
     z-index: 4000;
     background-color: #222222;
+}
+
+#titlebar.with-actions {
+    pointer-events: initial;
+}
+
+#titlebar .btn {
+    margin-top: 2px;
 }
 
 #titlebar .title-logo, #titlebar .loading-icon, #titlebar .clock {
@@ -121,6 +135,13 @@ body {
     top: 40px;
     bottom: 0;
     overflow: auto;
+}
+
+#hbcontents.viewer {
+    position: relative;
+    overflow: initial;
+    top: auto;
+    bottom: auto;
 }
 
 .uicontainer {
@@ -408,16 +429,68 @@ body {
     border-color: #375a7f;
 }
 
-.hbeditor .panel-success .list-group-item, .hbviewer .panel-primary .list-group-item {
+.hbeditor .panel-success .list-group-item, .hbviewer .panel-success .list-group-item {
     border-color: #00bc8c;
 }
 
-.hbeditor .panel-danger .list-group-item, .hbviewer .panel-primary .list-group-item {
+.hbeditor .panel-danger .list-group-item, .hbviewer .panel-danger .list-group-item {
     border-color: #e74c3c;
 }
 
-.hbeditor .panel-default .list-group-item, .hbviewer .panel-primary .list-group-item {
+.hbeditor .panel-default .list-group-item, .hbviewer .panel-default .list-group-item {
     border-color: #464545;
+}
+
+.panel-primary>.panel-heading {
+    background-color: #375a7f!important;
+}
+
+.panel-primary>.panel-heading>.panel-title {
+    color: #ffffff!important;
+}
+
+.panel-success>.panel-heading {
+    background-color: #00bc8c!important;
+}
+
+.panel-success>.panel-heading>.panel-title {
+    color: #ffffff!important;
+}
+
+.panel-danger>.panel-heading {
+    background-color: #e74c3c!important;
+}
+
+.panel-danger>.panel-heading>.panel-title {
+    color: #ffffff!important;
+}
+
+.panel-default>.panel-heading {
+    background-color: #464545!important;
+}
+
+.panel-default>.panel-heading>.panel-title {
+    color: #ffffff!important;
+}
+
+.viewer .hbviewer {
+    background-color: #DDDDDD;
+    color: #222222;
+    padding: 20px;
+}
+
+@media print {
+    .viewer .hbviewer {
+        padding: 0;
+    }
+}
+
+.hbviewer .panel {
+    page-break-inside: avoid;
+}
+
+.page-break {
+    page-break-after: always;
 }
 
 .btn-file {
