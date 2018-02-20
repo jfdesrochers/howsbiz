@@ -182,6 +182,34 @@ const Database = {
             })
         })
     },
+    countHBs: function (hbdata) {
+        return new Promise(function (resolve, reject) {
+            MongoClient.connect(env.DBURL)
+            .then(function(db) {
+                let hbs = db.collection('howsbiz')
+                let query = {'district': hbdata.district, 'week': hbdata.week}
+                if (hbdata.store) query['store'] = hbdata.store
+                if (hbdata.status) query['status'] = hbdata.status
+                if (hbdata.lastupdate) {
+                    hbdata.lastupdate = new Date(hbdata.lastupdate)
+                    query['lastModified'] = {$gte: hbdata.lastupdate}
+                }
+                hbs.find(query).project({'store': 1}).toArray()
+                .then(function (hblist) {
+                    db.close()
+                    resolve(hblist)
+                })
+                .catch(function (err) {
+                    db.close()
+                    reject(makeError('e_mongoerr', err))
+                })
+
+            })
+            .catch(function (err) {
+                reject(makeError('e_mongoerr', err))
+            })
+        })
+    },
     getComments: function (commentsdata) {
         return new Promise(function (resolve, reject) {
             MongoClient.connect(env.DBURL)
@@ -446,12 +474,11 @@ const Database = {
             })
         }) 
     },
-    emailGetEmails: function(store) {
+    emailGetEmails: function(query) {
         return new Promise(function (resolve, reject) {
             MongoClient.connect(env.DBURL)
             .then(function(db) {
                 let users = db.collection('users')
-                let query = {store: store}
                 users.find(query).project({'email': 1, '_id': 0}).toArray()
                 .then(function (userlist) {
                     db.close()

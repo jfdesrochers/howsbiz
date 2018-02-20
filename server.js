@@ -8,7 +8,7 @@ const path = require('path')
 const passport = require('passport')
 const LocalStrategy = require('passport-local').Strategy
 const {Database} = require('./server/data.js')
-const {mailHowsBiz, getAllHBs} = require('./server/mailhowsbiz.js')
+const {mailHowsBiz, getAllHBs, mailWeeklyUpdate} = require('./server/mailhowsbiz.js')
 const env = require('./env.json')
 
 passport.use(new LocalStrategy(

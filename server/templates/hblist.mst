@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <title>How's Biz</title>
+    </head>
+    <body style="font-family: 'Lato','Helvetica Neue','Segoe UI',Helvetica,Arial,sans-serif;font-size: 15px;line-height: 1.42857143;">
+        <div class="container" style="clear: both;padding: 20px;">
+            <div class="reporttitle" style="display: inline-block;margin-left: 5px;margin-right: 5px;">
+                <h1 style="font-size: 4em;font-weight: bold;margin-top: 21px;margin-bottom: 10.5px;">How's Biz</h1>
+                <div style="font-size: 22.5px;margin-bottom: 21px;font-weight: 300;line-height: 1.4;">Résumé de la Semaine {{week}}</div>
+            </div>
+            <p>Voici vos How's Biz pour la semaine. Vous trouverez ci-dessous un tableau indiquant quels magasins ont complété leurs commentaires, ainsi qu'un lien pour visionner ou imprimer le tout.</p>
+            <h2><span style="font-size: 3em;color: {{percentcolor}}">{{percentcomplete}}%</span> des magasins ont complété leur How's Biz cette semaine!</h2>
+            <table style="margin: 0 auto;width: 50%;text-align: center;margin-bottom: 15px;border: solid 1px #000000;border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="border: solid 1px #000000;">Numéro de magasin</th>
+                        <th style="border: solid 1px #000000;">How's Biz complété</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#storelist}}
+                        <tr>
+                            <td style="border-right: solid 1px #000000;">{{storeno}}</td>
+                            <td style="color: {{presencecolor}};">{{presenceicon}}</td>
+                        </tr>
+                    {{/storelist}}
+                </tbody>
+            </table>
+            <a href="{{url}}" style="font-size: 1.5em;font-weight: bold;">Consultez ou imprimez vos How's Biz</a>
+        </div>
+    </body>
+</html>

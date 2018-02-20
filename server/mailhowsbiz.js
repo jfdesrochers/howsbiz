@@ -7,6 +7,7 @@ const {Database, hbSections, hbColorMap, storeList} = require('./data.js')
 
 const hbmaster = fs.readFileSync(path.join(__dirname, 'templates', 'howsbiz.mst'), 'utf8').toString()
 const allhbs = fs.readFileSync(path.join(__dirname, 'templates', 'allhbs.mst'), 'utf8').toString()
+const hblist = fs.readFileSync(path.join(__dirname, 'templates', 'hblist.mst'), 'utf8').toString()
 
 const mergeSections = function(hb, keepColorNames) {
     return hbSections.map((sect) => {
@@ -32,7 +33,7 @@ const mailHowsBiz = function(hb) {
         data: mergeSections(hb)
     }
     let html = Mustache.render(hbmaster, hbtmpl)
-    Database.emailGetEmails(hb.store).then((emails) => {
+    Database.emailGetEmails({store: hb.store}).then((emails) => {
         sendMail({
             from: '"How\'s Biz par J-F Desrochers" <' + env.GMAILADDR + '>',
             to: 'martine.dessureault@staples.ca,' + emails.map((o) => o['email']).join(','),
@@ -64,3 +65,32 @@ const getAllHBs = function(hbs) {
 }
 
 module.exports.getAllHBs = getAllHBs
+
+const mailWeeklyUpdate = function(district, week) {
+    let hbstmpl = {
+        week: week,
+        storelist: Object.keys(storeList[district]).slice(1),
+        url: 'https://howsbiz.jfdft.com/view/' + new Buffer(JSON.stringify({district: district, week: week})).toString('base64')
+    }
+    let html = ""
+    return Database.countHBs({district: district, week: week, status: 'published'}).then((slist) => {
+        hbstmpl['percentcomplete'] = Math.round(slist.length / hbstmpl.storelist.length * 100)
+        hbstmpl['percentcolor'] = hbstmpl['percentcomplete'] > 80 ? '#00bc8c' : hbstmpl['percentcomplete'] > 60 ? '#f39c12' : '#e74c3c'
+        let stores = {}
+        slist.forEach(o => stores[o.store] = true)
+        hbstmpl.storelist = hbstmpl.storelist.map((o) => {
+            return {storeno: o, presencecolor: o in stores ? '#00bc8c' : '#e74c3c', presenceicon: o in stores ? 'OUI' : 'NON'}
+        })
+        html = Mustache.render(hblist, hbstmpl)
+        return Database.emailGetEmails({district: district})
+    }).then((emails) => {
+        sendMail({
+            from: '"How\'s Biz par J-F Desrochers" <' + env.GMAILADDR + '>',
+            to: emails.map((o) => o['email']).join(','), 
+            subject: 'Vos How\'s Biz de la semaine ' + week,
+            html: html
+        })
+    })
+}
+
+module.exports.mailWeeklyUpdate = mailWeeklyUpdate
