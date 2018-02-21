@@ -7,9 +7,10 @@ const AddComment = {}
 
 AddComment.oninit = function (vnode) {
     this.comment = Property('')
+    this.save = false
     this.doClose = (e) => {
         e.preventDefault()
-        if (typeof vnode.attrs.done === 'function') {
+        if (this.save && typeof vnode.attrs.done === 'function') {
             vnode.attrs.done(this.comment())
         }
     }
@@ -46,6 +47,7 @@ AddComment.view = function () {
 				m(".modal-footer", [
 					m("button.btn.btn-default", {'data-dismiss': 'modal'}, 'Annuler'),
 					m("button.btn.btn-primary", {onclick: () => {
+                        this.save = true
                         $('#addcomment').modal('hide')
                     }}, 'Sauvegarder')
 				])
