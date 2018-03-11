@@ -133,7 +133,7 @@ app.get('/contents/:key', (req, res, next) => {
         return res.sendStatus(404)
     }
     try {
-        let options = JSON.parse(new Buffer(req.params.key, 'base64').toString())
+        let options = JSON.parse(new Buffer(decodeURIComponent(req.params.key), 'base64').toString())
         options['status'] = 'published'
         Database.getHBs(options).then((hbs) => {
             res.send(getAllHBs(hbs))

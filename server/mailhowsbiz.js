@@ -70,7 +70,7 @@ const mailWeeklyUpdate = function(district, week) {
     let hbstmpl = {
         week: week,
         storelist: Object.keys(storeList[district]).slice(1),
-        url: 'https://howsbiz.jfdft.com/view/' + new Buffer(JSON.stringify({district: district, week: week})).toString('base64')
+        url: 'https://howsbiz.jfdft.com/view/' + encodeURIComponent(new Buffer(JSON.stringify({district: district, week: week})).toString('base64'))
     }
     let html = ""
     return Database.countHBs({district: district, week: week, status: 'published'}).then((slist) => {
